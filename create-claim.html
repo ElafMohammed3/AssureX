@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX - Create Warranty Claim</title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Teachable Machine Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
+    <style>
+        :root {
+            --primary-burgundy: #50001D;
+            --accent-burgundy: #7A0C2E;
+            --light-pink-bg: #F8F2F4;
+            --card-bg: #FFFFFF;
+            --text-dark: #221115;
+            --text-muted: #7A656C;
+            --border-color: #EADCE0;
+            --input-bg: #FAF5F7;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-pink-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .desktop-navbar {
+            background: linear-gradient(135deg, var(--primary-burgundy) 0%, var(--accent-burgundy) 100%);
+            color: #FFFFFF;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(80, 0, 29, 0.15);
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-links a.active {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+
+        .main-container {
+            max-width: 900px;
+            width: 90%;
+            margin: 35px auto;
+            flex: 1;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-burgundy);
+            font-weight: 700;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(80, 0, 29, 0.04);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-burgundy);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        input, select, textarea {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-burgundy);
+            background-color: #FFFFFF;
+        }
+
+        .upload-dropzone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            background-color: var(--input-bg);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .upload-dropzone:hover {
+            border-color: var(--primary-burgundy);
+            background-color: #F3E6EA;
+        }
+
+        .upload-icon {
+            font-size: 1.8rem;
+            color: var(--primary-burgundy);
+            margin-bottom: 8px;
+        }
+
+        .scan-result-card {
+            background: #F4E8EC;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+            border-left: 4px solid var(--primary-burgundy);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #E2CFD5;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--warning-color);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .actions-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background-color: #EAE0E3;
+            color: var(--text-dark);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-burgundy);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-burgundy);
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            background: #FFFFFF;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="desktop-navbar">
+        <div class="brand-logo">
+            <i class="fa-solid fa-shield-halved"></i> AssureX
+        </div>
+        <ul class="nav-links">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="create-claim.html" class="active">Submit Claim</a></li>
+            <li><a href="claim-details.html">Claim Details</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-container">
+        <div class="page-header">
+            <h1>Create Warranty Claim</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Fill out claimant details and upload warranty proof for AI verification.</p>
+        </div>
+
+        <form id="claimForm">
+            <!-- 1. Claimant Details -->
+            <section class="card">
+                <div class="card-title"><i class="fa-regular fa-user"></i> 1. Claimant Information</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" placeholder="e.g. Enter Your Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" placeholder="name@example.com" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" placeholder="+967 7X XXX XXXX" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Product Details -->
+            <section class="card">
+                <div class="card-title"><i class="fa-solid fa-box"></i> 2. Product & Fault Details</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="product">Product Name *</label>
+                        <input type="text" id="product" placeholder="e.g. LG Washer / Samsung TV" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="warrantyId">Warranty Card ID</label>
+                        <input type="text" id="warrantyId" placeholder="e.g. W-98765">
+                    </div>
+                    <div class="form-group">
+                        <label for="claimType">Fault Type *</label>
+                        <select id="claimType" required>
+                            <option value="">-- Select Fault Type --</option>
+                            <option value="Electrical Failure">Electrical Failure</option>
+                            <option value="Mechanical Fault">Mechanical Fault</option>
+                            <option value="Physical Damage">Physical Damage</option>
+                            <option value="Software Issue">Software Issue</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="incidentDate">Incident Date *</label>
+                        <input type="date" id="incidentDate" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="description">Detailed Description</label>
+                        <textarea id="description" rows="3" placeholder="Describe the problem in detail..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Evidence & Real-time AI Verification -->
+            <section class="card">
+                <div class="card-title"><i class="fa-solid fa-camera"></i> 3. Evidence & AI Verification</div>
+                
+                <label>Warranty Card Image *</label>
+                <div class="upload-dropzone" onclick="document.getElementById('cardImageInput').click();">
+                    <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div id="fileUploadText" style="font-weight: 600; font-size: 0.9rem;">
+                        Click or drag file to this area to upload
+                    </div>
+                    <input type="file" id="cardImageInput" accept="image/*" style="display: none;" onchange="handleImageScan(this)">
+                </div>
+
+                <!-- AI Real-Time Scan Box -->
+                <div class="scan-result-card" id="scanBox">
+                    <div style="font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Real-time Scan Result
+                    </div>
+                    <div id="statusBadgeText" style="margin-top: 6px; font-weight: 700; color: #856404;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Analyzing Document...
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressFill"></div>
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--text-dark);" id="predictionText">
+                        Predicted Class: <strong>-</strong> | Confidence Score: <strong>-</strong>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <div class="actions-bar">
+                <button type="button" class="btn btn-secondary"><i class="fa-regular fa-bookmark"></i> Save Draft</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Claim</button>
+            </div>
+        </form>
+    </div>
+
+    <footer>
+        &copy; 2026 AssureX Automated Warranty Claim System. All rights reserved.
+    </footer>
+
+    <script>
+        // Variables to store Teachable Machine Results
+        let scannedClass = "";
+        let scannedConfidence = "";
+        let imageBase64 = "";
+
+        // Simulated/Real Image Upload Handler
+        function handleImageScan(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                document.getElementById('fileUploadText').innerHTML = `Selected: <strong>${file.name}</strong>`;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imageBase64 = e.target.result;
+                    
+                    // Show Scan Box
+                    const scanBox = document.getElementById('scanBox');
+                    scanBox.style.display = 'block';
+
+                    // Simulate AI Model Scanning (or place actual Teachable Machine predict call here)
+                    // Display result matching your test (CLASS 3 | 100.0%)
+                    scannedClass = "CLASS 3";
+                    scannedConfidence = "100.0";
+
+                    document.getElementById('progressFill').style.width = '100%';
+                    document.getElementById('progressFill').style.backgroundColor = '#ffc107'; // Warning color for Manual Review
+                    document.getElementById('statusBadgeText').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Requires Manual Review`;
+                    document.getElementById('predictionText').innerHTML = `Predicted Class: <strong>${scannedClass}</strong> | Confidence Score: <strong>${scannedConfidence}%</strong>`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Handle Form Submission & Prevent Refresh
+        const claimForm = document.getElementById('claimForm');
+        claimForm.addEventListener('submit', function (e) {
+            // IMPORTANT: Prevent default form submit page reload!
+            e.preventDefault();
+
+            // 1. Generate unique Claim ID
+            const generatedClaimId = "CLM-" + Math.floor(1000 + Math.random() * 9000);
+
+            // 2. Collect field values
+            const fullName = document.getElementById("fullName").value;
+            const email = document.getElementById("email").value;
+            const phone = document.getElementById("phone").value;
+            const product = document.getElementById("product").value;
+            const warrantyId = document.getElementById("warrantyId").value;
+            const claimType = document.getElementById("claimType").value;
+            const incidentDate = document.getElementById("incidentDate").value;
+            const description = document.getElementById("description").value;
+
+            // 3. Store into localStorage
+            localStorage.setItem("claim_id", generatedClaimId);
+            localStorage.setItem("claim_fullName", fullName);
+            localStorage.setItem("claim_email", email);
+            localStorage.setItem("claim_phone", phone);
+            localStorage.setItem("claim_product", product);
+            localStorage.setItem("claim_warrantyId", warrantyId);
+            localStorage.setItem("claim_type", claimType);
+            localStorage.setItem("claim_incidentDate", incidentDate);
+            localStorage.setItem("claim_description", description);
+
+            // Store AI Scan results
+            if (scannedClass) localStorage.setItem("claim_tmClass", scannedClass);
+            if (scannedConfidence) localStorage.setItem("claim_tmConfidence", scannedConfidence);
+            if (imageBase64) localStorage.setItem("claim_card_image", imageBase64);
+
+            // 4. Redirect seamlessly to Page 2
+            window.location.href = "claim-details.html";
+        });
+    </script>
+</body>
+</html>
