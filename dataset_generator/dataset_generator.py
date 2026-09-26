@@ -1225,7 +1225,11 @@ def validate_dataset(
         actual = sum(1 for record in records if record["split"] == split)
         check(f"split_count_{split}", actual == expected_records, f"Found {actual}; expected {expected_records}")
 
-    check("unique_claim_ids", len({record["claim_id"] for record in records}) == len(records), "ClaiAll claim IDs are unique ")
+    check(
+        "unique_claim_ids",
+        len({record["claim_id"] for record in records}) == len(records),
+        "All claim IDs are unique",
+    )
     split_by_group: dict[str, set[str]] = defaultdict(set)
     for record in records:
         split_by_group[record["_group_id"]].add(record["split"])
