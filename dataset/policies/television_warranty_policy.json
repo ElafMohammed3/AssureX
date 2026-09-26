@@ -49,5 +49,10 @@
     "TV-43U",
     "TV-55OLED",
     "TV-65Q"
+  ],
+  "retailers": [
+    "Home Screen",
+    "Vision Retail",
+    "Electro Store"
   ]
 }

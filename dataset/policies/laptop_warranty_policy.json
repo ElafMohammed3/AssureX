@@ -51,5 +51,10 @@
     "LP-500",
     "LP-900",
     "LP-Pro"
+  ],
+  "retailers": [
+    "OfficeDirect",
+    "PC World",
+    "Digital Bazaar"
   ]
 }

@@ -54,5 +54,10 @@
     "SP-100",
     "SP-200",
     "SP-X"
+  ],
+  "retailers": [
+    "TechMart",
+    "City Electronics",
+    "Mobile Hub"
   ]
 }
