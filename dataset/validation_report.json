@@ -1,0 +1,122 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "checks": [
+    {
+      "name": "total_claims",
+      "status": "PASS",
+      "detail": "Found 1500; expected 1500"
+    },
+    {
+      "name": "class_count_valid_claim",
+      "status": "PASS",
+      "detail": "Found 500; expected 500"
+    },
+    {
+      "name": "class_count_invalid_claim",
+      "status": "PASS",
+      "detail": "Found 500; expected 500"
+    },
+    {
+      "name": "class_count_manual_review",
+      "status": "PASS",
+      "detail": "Found 500; expected 500"
+    },
+    {
+      "name": "split_count_train",
+      "status": "PASS",
+      "detail": "Found 1050; expected 1050"
+    },
+    {
+      "name": "split_count_validation",
+      "status": "PASS",
+      "detail": "Found 225; expected 225"
+    },
+    {
+      "name": "split_count_test",
+      "status": "PASS",
+      "detail": "Found 225; expected 225"
+    },
+    {
+      "name": "unique_claim_ids",
+      "status": "PASS",
+      "detail": "Claim IDs are not unique"
+    },
+    {
+      "name": "no_group_crosses_splits",
+      "status": "PASS",
+      "detail": "A duplicate group crosses a split boundary"
+    },
+    {
+      "name": "train_card_count",
+      "status": "PASS",
+      "detail": "Found 2100; expected 2100"
+    },
+    {
+      "name": "validation_card_count",
+      "status": "PASS",
+      "detail": "Found 225; expected 225"
+    },
+    {
+      "name": "test_card_count",
+      "status": "PASS",
+      "detail": "Found 225; expected 225"
+    },
+    {
+      "name": "all_card_files_exist",
+      "status": "PASS",
+      "detail": "One or more card files are missing"
+    },
+    {
+      "name": "real_duplicate_document_hash",
+      "status": "PASS",
+      "detail": "No real duplicate document hash was generated"
+    }
+  ],
+  "statistics": {
+    "total_claims": 1500,
+    "class_counts": {
+      "Invalid Claim": 500,
+      "Manual Review": 500,
+      "Valid Claim": 500
+    },
+    "split_counts": {
+      "train": 1050,
+      "test": 225,
+      "validation": 225
+    },
+    "card_counts": {
+      "test": 225,
+      "train": 2100,
+      "validation": 225
+    },
+    "category_counts": {
+      "Television": 499,
+      "Laptop": 500,
+      "Smartphone": 501
+    },
+    "scenario_counts": {
+      "invalid_receipt": 90,
+      "unauthorized_repair": 100,
+      "missing_mandatory_document": 110,
+      "excluded_damage": 110,
+      "late_reporting": 50,
+      "extended_warranty": 60,
+      "duplicate_claim": 100,
+      "standard_covered": 200,
+      "serial_mismatch": 90,
+      "borderline_reporting": 60,
+      "service_center_unclear": 50,
+      "previous_authorized_repair": 80,
+      "complex_covered": 60,
+      "expired_warranty": 120,
+      "near_expiry_boundary": 100,
+      "contradictory_information": 90,
+      "replacement_not_eligible": 30
+    },
+    "duplicate_groups": 50,
+    "missing_document_claims": 110,
+    "contradiction_claims": 180,
+    "expired_claims": 120
+  }
+}

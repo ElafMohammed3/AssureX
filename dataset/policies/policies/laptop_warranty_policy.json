@@ -1,0 +1,60 @@
+{
+  "product_category": "Laptop",
+  "coverage_duration_months": 24,
+  "warranty_start_conditions": [
+    "Valid purchase receipt from authorized seller"
+  ],
+  "covered_faults": {
+    "Motherboard Defect": "Component failure on main board.",
+    "Keyboard Failure": "Multiple keys non-functional.",
+    "Display Failure": "Backlight failure without screen crack.",
+    "Factory SSD Failure": "Primary storage failure."
+  },
+  "exclusions": {
+    "Physical Damage": "Hinge broken or chassis damage.",
+    "Liquid Damage": "Liquid spill marks internal.",
+    "Unauthorized Modification": "RAM/SSD force modification damage."
+  },
+  "claim_reporting_period_days": 45,
+  "repair_conditions": [
+    "Manufacturer original parts required"
+  ],
+  "authorized_service_centre_required": true,
+  "replacement_conditions": {
+    "eligible_after_repairs": 3,
+    "unrepairable_covered_fault": true
+  },
+  "grace_period_days": 14,
+  "mandatory_documents": [
+    "Purchase Receipt",
+    "Serial Number Photo",
+    "Technical Diagnostic Report"
+  ],
+  "hard_fail_rules": [
+    "Warranty expired",
+    "Liquid damage",
+    "Unauthorized modification"
+  ],
+  "warning_rules": [
+    "Battery health degradation under 80%"
+  ],
+  "manual_review_rules": [
+    "Hardware modification status unclear",
+    "Conflicting repair records"
+  ],
+  "brands": [
+    "ProBook",
+    "UltraTech",
+    "OmniLap"
+  ],
+  "models": [
+    "LP-500",
+    "LP-900",
+    "LP-Pro"
+  ],
+  "retailers": [
+    "OfficeDirect",
+    "PC World",
+    "Digital Bazaar"
+  ]
+}

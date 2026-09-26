@@ -1,0 +1,58 @@
+{
+  "product_category": "Television",
+  "coverage_duration_months": 18,
+  "warranty_start_conditions": [
+    "Authorized retailer purchase receipt"
+  ],
+  "covered_faults": {
+    "Display Panel Defect": "Internal panel line defect.",
+    "Power Supply Failure": "Internal power board failure.",
+    "Main Board Defect": "Smart hub system failure."
+  },
+  "exclusions": {
+    "Cracked Screen": "External screen crack from impact.",
+    "Electrical Surge": "High voltage power surge damage.",
+    "Liquid Damage": "Liquid intrusion."
+  },
+  "claim_reporting_period_days": 30,
+  "repair_conditions": [
+    "On-site inspection by authorized technician"
+  ],
+  "authorized_service_centre_required": true,
+  "replacement_conditions": {
+    "eligible_after_repairs": 2,
+    "unrepairable_covered_fault": true
+  },
+  "grace_period_days": 10,
+  "mandatory_documents": [
+    "Purchase Receipt",
+    "Product ID Tag Photo"
+  ],
+  "hard_fail_rules": [
+    "Warranty expired",
+    "Cracked screen",
+    "Electrical surge"
+  ],
+  "warning_rules": [
+    "Claim reported near expiry date"
+  ],
+  "manual_review_rules": [
+    "Surge evidence inconclusive",
+    "Serial mismatch"
+  ],
+  "brands": [
+    "VisionMax",
+    "ViewOptics",
+    "CineDisplay"
+  ],
+  "models": [
+    "TV-43U",
+    "TV-55OLED",
+    "TV-65Q"
+  ],
+  "retailers": [
+    "Home Screen",
+    "Vision Retail",
+    "Electro Store"
+  ]
+}

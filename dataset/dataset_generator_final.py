@@ -194,6 +194,26 @@ POLICIES: dict[str, dict[str, Any]] = {
 }
 
 
+SCENARIO_DESCRIPTIONS: dict[str, str] = {
+    "standard_covered": "Covered fault, active warranty, valid receipt, matched serial and complete evidence.",
+    "near_expiry_boundary": "Covered fault close to expiry but submitted before the expiry boundary.",
+    "previous_authorized_repair": "Covered fault after an authorized repair that does not breach the replacement threshold.",
+    "extended_warranty": "Covered fault under an extended warranty with valid documents.",
+    "complex_covered": "Covered fault with a longer repair history and supporting diagnostic evidence.",
+    "expired_warranty": "Fault and claim occur after the configured warranty expiry date.",
+    "excluded_damage": "Fault matches a policy exclusion such as physical, liquid, surge or unauthorized damage.",
+    "unauthorized_repair": "Repair was performed outside an authorized service center.",
+    "invalid_receipt": "A receipt is present but invalid and purchase information is inconsistent.",
+    "late_reporting": "The claim was reported after the category reporting period.",
+    "replacement_not_eligible": "Replacement is requested before the policy repair threshold is reached.",
+    "missing_mandatory_document": "One or more category-specific mandatory documents are absent.",
+    "serial_mismatch": "The receipt serial number conflicts with the product serial number.",
+    "duplicate_claim": "Two records share a product, invoice, serial and claim facts in one duplicate group.",
+    "contradictory_information": "Dates, serial numbers or model evidence contain a deterministic conflict.",
+    "borderline_reporting": "Claim is submitted on the warranty expiry boundary and requires review.",
+    "service_center_unclear": "Service-center authorization is unclear without confirmed unauthorized repair.",
+}
+
 # Exact per-class scenario counts. Every count is deterministic and auditable.
 SCENARIO_COUNTS: dict[str, dict[str, int]] = {
     "Valid Claim": {
@@ -925,6 +945,40 @@ def build_document_manifest(root: Path, records: list[dict[str, Any]]) -> list[d
         writer.writerows(rows)
     return rows
 
+def write_scenarios(root: Path) -> None:
+    """Write auditable scenario definitions and counts."""
+    scenarios = []
+
+    for claim_class, definitions in SCENARIO_COUNTS.items():
+        for scenario, count in definitions.items():
+            scenarios.append(
+                {
+                    "scenario": scenario,
+                    "claim_class": claim_class,
+                    "count": count,
+                    "description": SCENARIO_DESCRIPTIONS[scenario],
+                    "source": "SRS section 1.2 scenario requirements",
+                }
+            )
+
+    payload = {
+        "dataset_name": "AssureX Claim Engine Common Warranty Dataset",
+        "srs_reference": "AssureX Claim Engine SRS, section 1.2",
+        "total_claims": sum(item["count"] for item in scenarios),
+        "class_totals": {
+            claim_class: sum(count for count in definitions.values())
+            for claim_class, definitions in SCENARIO_COUNTS.items()
+        },
+        "scenarios": scenarios,
+        "notes": [
+            "The dataset is generated locally; no external dataset is used.",
+            "The same records are rendered to CSV and Claim Summary Cards.",
+            "Duplicate groups are kept inside one data split.",
+            "Audit and rule outputs are excluded from model inputs.",
+        ],
+    }
+
+    write_json(root / "scenarios.json", payload)
 
 def write_data_dictionary(root: Path) -> None:
     lines = [
@@ -1256,7 +1310,7 @@ def clean_generated_output(root: Path) -> None:
     for filename in (
         "documents.csv", "claim_image_mapping.csv", "statistics.json",
         "validation_report.json", "data_dictionary.md", "feature_manifest.json",
-    ):
+        "scenarios.json",    ):
         path = root / filename
         if path.exists():
             path.unlink()
@@ -1279,6 +1333,7 @@ def main() -> None:
     write_csvs(root, records)
     mapping = generate_cards(root, records)
     documents = build_document_manifest(root, records)
+    write_scenarios(root)    
     write_data_dictionary(root)
     write_feature_manifest(root)
     write_statistics(root, records, mapping, documents)
