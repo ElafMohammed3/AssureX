@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX Claim Engine - Claim Status</title>
+    <style>
+        :root {
+            --bg-body: #F4F3F5;
+            --sidebar-bg: #2D080E;
+            --primary-burgundy: #4A0E17;
+            --accent-red: #801828;
+            --card-bg: #FFFFFF;
+            --text-dark: #1F1F1F;
+            --text-muted: #6C757D;
+            --status-valid: #28A745;
+            --border-radius: 18px;
+            --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-dark); display: flex; min-height: 100vh; overflow-x: hidden; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #FFFFFF; display: flex; flex-direction: column; padding: 30px 20px; flex-shrink: 0; }
+        .sidebar .brand { font-size: 24px; font-weight: bold; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; color: #FFFFFF; }
+        .sidebar .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .sidebar .nav-item a { color: rgba(255, 255, 255, 0.7); text-decoration: none; padding: 14px 18px; border-radius: 12px; display: block; transition: all 0.3s ease; font-size: 15px; }
+        .sidebar .nav-item.active a, .sidebar .nav-item a:hover { background-color: var(--primary-burgundy); color: #FFFFFF; font-weight: 600; }
+        .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .top-header { background-color: var(--card-bg); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .top-header .user-profile { display: flex; align-items: center; gap: 15px; }
+        .top-header .avatar { width: 42px; height: 42px; border-radius: 50%; background-color: var(--primary-burgundy); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .content-area { padding: 35px 40px; display: flex; flex-direction: column; gap: 30px; }
+        .section-header { margin-bottom: 15px; }
+        .section-title { font-size: 20px; font-weight: 700; color: var(--primary-burgundy); }
+        .content-card { background-color: var(--card-bg); border-radius: var(--border-radius); padding: 25px; box-shadow: var(--shadow-soft); }
+        .stepper { display: flex; justify-content: space-between; margin: 30px 0; position: relative; }
+        .stepper::before { content: ''; position: absolute; top: 15px; left: 0; width: 100%; height: 4px; background-color: #E2E0E5; z-index: 1; }
+        .step { position: relative; z-index: 2; background-color: var(--card-bg); padding: 0 10px; display: flex; flex-direction: column; align-items: center; }
+        .step .circle { width: 34px; height: 34px; border-radius: 50%; background-color: #E2E0E5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+        .step.active .circle { background-color: var(--primary-burgundy); }
+        .step.completed .circle { background-color: var(--status-valid); }
+        .step .label { font-size: 13px; font-weight: 600; margin-top: 8px; color: var(--text-dark); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">AssureX Engine</div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="#">Dashboard</a></li>
+            <li class="nav-item"><a href="#">My Products</a></li>
+            <li class="nav-item"><a href="#">Warranty Records</a></li>
+            <li class="nav-item"><a href="#">Submit Claim</a></li>
+            <li class="nav-item active"><a href="#">Claim Status</a></li>
+            <li class="nav-item"><a href="#">Receipt Vault</a></li>
+        </ul>
+    </aside>
+    <div class="main-wrapper">
+        <header class="top-header">
+            <h2>Claim Lifecycle & Pipeline Status Tracking</h2>
+            <div class="user-profile">
+                <div>
+                    <div style="font-weight: bold;">John Doe</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">User ID: USR-8802</div>
+                </div>
+                <div class="avatar">JD</div>
+            </div>
+        </header>
+        <main class="content-area">
+            <div class="content-card">
+                <div class="section-header">
+                    <h3 class="section-title">Claim Progression Tracker (#CLM-9082)</h3>
+                </div>
+                <div class="stepper">
+                    <div class="step completed">
+                        <div class="circle">✓</div>
+                        <div class="label">Submitted</div>
+                    </div>
+                    <div class="step completed">
+                        <div class="circle">✓</div>
+                        <div class="label">OCR Extracted</div>
+                    </div>
+                    <div class="step active">
+                        <div class="circle">3</div>
+                        <div class="label">AI Evaluation</div>
+                    </div>
+                    <div class="step">
+                        <div class="circle">4</div>
+                        <div class="label">Rule Engine</div>
+                    </div>
+                    <div class="step">
+                        <div class="circle">5</div>
+                        <div class="label">Final Decision</div>
+                    </div>
+                </div>
+                <div style="background-color: #FAFAFA; padding: 20px; border-radius: 12px; border-left: 4px solid var(--primary-burgundy);">
+                    <div style="font-weight: bold; margin-bottom: 5px;">Current Stage: Dual Model AI Evaluation</div>
+                    <div style="font-size: 13px; color: var(--text-muted);">Your claim is currently being evaluated by both the Python classification model and Google Teachable Machine model. Final prediction expected shortly.</div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

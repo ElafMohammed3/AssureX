@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX - Claim Details & Evaluation</title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-burgundy: #50001D;
+            --accent-burgundy: #7A0C2E;
+            --light-pink-bg: #F8F2F4;
+            --card-bg: #FFFFFF;
+            --text-dark: #221115;
+            --text-muted: #7A656C;
+            --border-color: #EADCE0;
+            --input-bg: #FAF5F7;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --secondary-gray: #6c757d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-pink-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .desktop-navbar {
+            background: linear-gradient(135deg, var(--primary-burgundy) 0%, var(--accent-burgundy) 100%);
+            color: #FFFFFF;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(80, 0, 29, 0.15);
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+
+        .main-container {
+            max-width: 1100px;
+            width: 90%;
+            margin: 35px auto;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-burgundy);
+            font-weight: 700;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(80, 0, 29, 0.04);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-burgundy);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: var(--text-dark);
+            font-weight: 700;
+            text-align: right;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.88rem;
+        }
+
+        th {
+            background-color: var(--input-bg);
+            color: var(--primary-burgundy);
+            font-weight: 700;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-success { background: #D4EDDA; color: #155724; }
+        .badge-danger { background: #F8D7DA; color: #721C24; }
+        .badge-warning { background: #FFF3CD; color: #856404; }
+        .badge-secondary { background: #E2E3E5; color: #383D41; }
+
+        .image-preview-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+            max-height: 220px;
+            object-fit: contain;
+        }
+
+        .xai-box {
+            background: linear-gradient(135deg, #FAF0F2 0%, #F5E5E8 100%);
+            border-left: 4px solid var(--primary-burgundy);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .btn-back {
+            background: var(--primary-burgundy);
+            color: #FFF;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            background: #FFFFFF;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="desktop-navbar">
+        <div class="brand-logo">
+            <i class="fa-solid fa-shield-halved"></i> AssureX
+        </div>
+        <ul class="nav-links">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="create-claim.html">Submit Claim</a></li>
+            <li><a href="#" class="active">Claim Details</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-container">
+        <div class="page-header">
+            <div>
+                <h1>Claim Evaluation Details</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Automated Real-Time AI Analysis & Evidence Verification</p>
+            </div>
+            <a href="create-claim.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Create New Claim</a>
+        </div>
+
+        <div class="details-grid">
+            <!-- Left Column: Customer & Claim Info -->
+            <div>
+                <section class="card">
+                    <div class="card-title"><i class="fa-regular fa-user"></i> Claimant Information</div>
+                    <div class="info-row"><span class="info-label">Claim ID:</span><span class="info-value" id="displayClaimId">Not Provided</span></div>
+                    <div class="info-row"><span class="info-label">Full Name:</span><span class="info-value" id="displayName">Not Provided</span></div>
+                    <div class="info-row"><span class="info-label">Email:</span><span class="info-value" id="displayEmail">Not Provided</span></div>
+                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value" id="displayPhone">Not Provided</span></div>
+                </section>
+
+                <section class="card">
+                    <div class="card-title"><i class="fa-solid fa-box"></i> Product & Incident Details</div>
+                    <div class="info-row"><span class="info-label">Product Name:</span><span class="info-value" id="displayProduct">Not Selected</span></div>
+                    <div class="info-row"><span class="info-label">Warranty ID:</span><span class="info-value" id="displayWarrantyId">N/A</span></div>
+                    <div class="info-row"><span class="info-label">Fault Type:</span><span class="info-value" id="displayFaultType">Not Selected</span></div>
+                    <div class="info-row"><span class="info-label">Incident Date:</span><span class="info-value" id="displayDate">N/A</span></div>
+                    <div class="info-row"><span class="info-label">Description:</span><span class="info-value" id="displayDesc">N/A</span></div>
+                </section>
+            </div>
+
+            <!-- Right Column: AI Model Evaluation & OCR Evidence -->
+            <div>
+                <section class="card">
+                    <div class="card-title"><i class="fa-solid fa-microchip"></i> AI Models Evaluation Comparison</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Prediction</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Teachable Machine (Google)</strong></td>
+                                <td id="tmPred"><span class="badge badge-secondary">No Scan</span></td>
+                                <td id="tmConf">N/A</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Python Model (Custom Trained)</strong></td>
+                                <td><span class="badge badge-secondary">Under Development</span></td>
+                                <td style="font-size: 0.8rem; color: var(--text-muted);">N/A</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="xai-box">
+                        <i class="fa-solid fa-brain" style="color: var(--primary-burgundy);"></i> <strong>Explainable AI (XAI) Insight:</strong>
+                        <p id="xaiExplanation" style="margin-top: 5px; color: var(--text-muted);">No scan performed yet. Submit a warranty card image from the Create Claim page to view the automated evaluation.</p>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-title"><i class="fa-solid fa-file-invoice"></i> Uploaded Evidence</div>
+                    <div class="image-preview-container">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Warranty Card Image:</div>
+                        <div id="imageHolder" style="margin-top: 8px;">
+                            <p style="font-size: 0.82rem; color: var(--text-muted); font-style: italic;">No image available for preview.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 AssureX Automated Warranty Claim System. All rights reserved.
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Read data saved from Page 1
+            const claimId = localStorage.getItem("claim_id");
+            const fullName = localStorage.getItem("claim_fullName");
+            const email = localStorage.getItem("claim_email");
+            const phone = localStorage.getItem("claim_phone");
+            const product = localStorage.getItem("claim_product");
+            const warrantyId = localStorage.getItem("claim_warrantyId");
+            const claimType = localStorage.getItem("claim_type");
+            const incidentDate = localStorage.getItem("claim_incidentDate");
+            const description = localStorage.getItem("claim_description");
+            
+            const tmClass = localStorage.getItem("claim_tmClass");
+            const tmConfidence = localStorage.getItem("claim_tmConfidence");
+            const cardImgData = localStorage.getItem("claim_card_image");
+
+            // Fill Customer & Product details ONLY if user submitted them
+            if (claimId) document.getElementById("displayClaimId").innerText = claimId;
+            if (fullName) document.getElementById("displayName").innerText = fullName;
+            if (email) document.getElementById("displayEmail").innerText = email;
+            if (phone) document.getElementById("displayPhone").innerText = phone;
+            if (product) document.getElementById("displayProduct").innerText = product;
+            if (warrantyId) document.getElementById("displayWarrantyId").innerText = warrantyId;
+            if (claimType) document.getElementById("displayFaultType").innerText = claimType;
+            if (incidentDate) document.getElementById("displayDate").innerText = incidentDate;
+            if (description) document.getElementById("displayDesc").innerText = description;
+
+            // Render Uploaded Image if available
+            if (cardImgData) {
+                document.getElementById("imageHolder").innerHTML = `<img src="${cardImgData}" alt="Uploaded Warranty Card">`;
+            }
+
+            // Real Teachable Machine (Google Model) Result from Page 1
+            const tmPredTd = document.getElementById("tmPred");
+            const tmConfTd = document.getElementById("tmConf");
+            const xaiBox = document.getElementById("xaiExplanation");
+
+            if (tmClass && tmConfidence) {
+                const confVal = parseFloat(tmConfidence).toFixed(1);
+                tmConfTd.innerText = confVal + "%";
+
+                if (tmClass.toLowerCase() === "valid") {
+                    tmPredTd.innerHTML = `<span class="badge badge-success">Valid</span>`;
+                    xaiBox.innerHTML = `<strong>Status: Valid Document</strong><br>` +
+                        `Google Teachable Machine model successfully identified the warranty card image as authentic with <strong>${confVal}%</strong> confidence score.`;
+                } else if (tmClass.toLowerCase() === "invalid") {
+                    tmPredTd.innerHTML = `<span class="badge badge-danger">Invalid</span>`;
+                    xaiBox.innerHTML = `<strong>Status: Rejected Document</strong><br>` +
+                        `Google Teachable Machine model classified the document as invalid or tampered with (Confidence: <strong>${confVal}%</strong>). Manual audit required.`;
+                } else {
+                    tmPredTd.innerHTML = `<span class="badge badge-warning">Uncertain</span>`;
+                    xaiBox.innerHTML = `<strong>Status: Manual Review Needed</strong><br>` +
+                        `Model confidence score (${confVal}%) is below the automated approval threshold.`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
