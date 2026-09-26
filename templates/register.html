@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX Claim Engine - Create Account</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+    
+    <nav class="navbar">
+        <a href="index.html" class="brand-logo">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>AssureX</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Sign In</a>
+            <a href="register.html" class="btn-nav active">Create Account</a>
+        </div>
+    </nav>
+
+    
+    <section class="register-hero-centered">
+        <div class="container flex-center">
+            
+            
+            <div class="auth-card register-card-centered">
+                <div class="card-header text-center">
+                    <div class="brand-badge"><i class="fa-solid fa-user-plus"></i> Account Registration</div>
+                    <h2>Create Account</h2>
+                    <p>Enter your credentials to register a new user profile on AssureX</p>
+                </div>
+
+                <div id="alert-box" class="alert-box hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="alert-message">Please correct the highlighted errors.</span>
+                </div>
+
+                <form id="registerForm" novalidate action="index.html" method="POST">
+                    
+
+                    <div class="form-row">
+                       
+                        <div class="form-group flex-1">
+                            <label for="full_name">Full Name *</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-user input-icon"></i>
+                                <input type="text" id="full_name" name="full_name" placeholder="John Doe" required>
+                            </div>
+                            <small class="error-msg" id="full_name-error"></small>
+                        </div>
+
+                        
+                        <div class="form-group flex-1">
+                            <label for="email">Email Address *</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-envelope input-icon"></i>
+                                <input type="email" id="email" name="email" placeholder="name@domain.com" required>
+                            </div>
+                            <small class="error-msg" id="email-error"></small>
+                        </div>
+                    </div>
+
+                    
+                    <div class="form-row">
+                        
+                        <div class="form-group flex-1">
+                            <label for="phone">Phone Number *</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-phone input-icon"></i>
+                                <input type="tel" id="phone" name="phone" placeholder="+1234567890" required>
+                            </div>
+                            <small class="error-msg" id="phone-error"></small>
+                        </div>
+
+                        
+                        <div class="form-group flex-1">
+                            <label for="role">User Role *</label>
+                            <div class="select-wrapper">
+                                <i class="fa-solid fa-user-gear select-icon"></i>
+                                <select id="role" name="role" class="custom-select" required>
+                                    <option value="Customer" selected>Customer</option>
+                                    <option value="Service-center employee">Service-center employee</option>
+                                    <option value="Claim reviewer">Claim reviewer</option>
+                                    <option value="Administrator">Administrator</option>
+                                </select>
+                            </div>
+                            <small class="error-msg" id="role-error"></small>
+                        </div>
+                    </div>
+
+
+                    <div class="form-row">
+                       
+                        <div class="form-group flex-1">
+                            <label for="password">Password *</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-lock input-icon"></i>
+                                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                                <i class="fa-regular fa-eye toggle-password" id="togglePassword"></i>
+                            </div>
+                            <small class="error-msg" id="password-error"></small>
+                        </div>
+
+                        <div class="form-group flex-1">
+                            <label for="confirm_password">Confirm Password *</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-lock input-icon"></i>
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required>
+                                <i class="fa-regular fa-eye toggle-password" id="toggleConfirmPassword"></i>
+                            </div>
+                            <small class="error-msg" id="confirm_password-error"></small>
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group text-center">
+                        <label class="remember-me inline-flex">
+                            <input type="checkbox" id="terms" required>
+                            <span>I agree to the <a href="#" class="terms-link">Terms & Conditions</a></span>
+                        </label>
+                        <small class="error-msg" id="terms-error"></small>
+                    </div>
+
+                   
+                    <button type="submit" class="btn-submit btn-large">
+                        <span>Create Account</span>
+                        <i class="fa-solid fa-user-check"></i>
+                    </button>
+                </form>
+
+                <div class="register-link text-center">
+                    Already have an account? <a href="index.html">Sign In</a>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+   
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How AssureX Platform Works</h2>
+                <p>An end-to-end intelligent warranty evaluation pipeline powered by NextWave AI</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+                    <span class="step-number">01</span>
+                    <h3>Submit Claim & Evidence</h3>
+                    <p>Upload purchase invoices, warranty cards, serial numbers, and damage evidence photos easily.</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-microchip"></i></div>
+                    <span class="step-number">02</span>
+                    <h3>Dual AI Model Analysis</h3>
+                    <p>Structured data is evaluated via Python ML classification while visual summary cards are cross-verified via Teachable Machine.</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <span class="step-number">03</span>
+                    <h3>Warranty Rule Validation</h3>
+                    <p>Automated logic checks policy expiration, serial number matches, duplicate submissions, and missing documents.</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                    <span class="step-number">04</span>
+                    <h3>Smart Unified Decision</h3>
+                    <p>Claims are instantly classified as Likely Valid, Likely Invalid, or routed for Manual Review with complete audit logs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <footer class="footer">
+        <div class="container text-center">
+            <p>&copy; 2026 AssureX Claim Engine — NextWave AI & ML Document Ops Platform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../static/script.js"></script>
+</body>
+</html>
