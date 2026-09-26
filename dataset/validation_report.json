@@ -40,12 +40,12 @@
     {
       "name": "unique_claim_ids",
       "status": "PASS",
-      "detail": "Claim IDs are not unique"
+      "detail": "All claim IDs are unique"
     },
     {
       "name": "no_group_crosses_splits",
       "status": "PASS",
-      "detail": "A duplicate group crosses a split boundary"
+      "detail": "No duplicate group crosses a split boundary"
     },
     {
       "name": "train_card_count",
@@ -65,12 +65,12 @@
     {
       "name": "all_card_files_exist",
       "status": "PASS",
-      "detail": "One or more card files are missing"
+      "detail": "All mapped card files exist"
     },
     {
       "name": "real_duplicate_document_hash",
       "status": "PASS",
-      "detail": "No real duplicate document hash was generated"
+      "detail": "At least one duplicate document hash was generated"
     }
   ],
   "statistics": {

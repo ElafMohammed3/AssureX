@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+dataset/final_run*/
+.env
+.venv/
+venv/
+desktop.ini

@@ -1225,14 +1225,14 @@ def validate_dataset(
         actual = sum(1 for record in records if record["split"] == split)
         check(f"split_count_{split}", actual == expected_records, f"Found {actual}; expected {expected_records}")
 
-    check("unique_claim_ids", len({record["claim_id"] for record in records}) == len(records), "Claim IDs are not unique")
+    check("unique_claim_ids", len({record["claim_id"] for record in records}) == len(records), "ClaiAll claim IDs are unique ")
     split_by_group: dict[str, set[str]] = defaultdict(set)
     for record in records:
         split_by_group[record["_group_id"]].add(record["split"])
     check(
         "no_group_crosses_splits",
         all(len(value) == 1 for value in split_by_group.values()),
-        "A duplicate group crosses a split boundary",
+        "No duplicate group crosses a split boundary",
     )
 
     card_counts = Counter(row["split"] for row in mapping)
@@ -1242,7 +1242,7 @@ def validate_dataset(
     check(
         "all_card_files_exist",
         all((root / row["image_path"]).exists() for row in mapping),
-        "One or more card files are missing",
+        "All mapped card files exist",
     )
 
     # Semantic checks: these are the checks most likely to catch bad synthetic data.
@@ -1281,7 +1281,7 @@ def validate_dataset(
     check(
         "real_duplicate_document_hash",
         any(row["is_duplicate_hash"] for row in documents),
-        "No real duplicate document hash was generated",
+        "At least one duplicate document hash was generated",
     )
 
     stats = {
