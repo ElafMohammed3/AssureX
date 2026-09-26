@@ -355,9 +355,7 @@ def customer_dashboard():
         else []
     )
 
-    claims = Claim.query.filter_by(user_id=user.user_id).all() = Product.query.filter_by(owner_id=user.user_id).all()
-    warranties = Warranty.query.filter_by(user_id=user.user_id).all()
-    claims = Claim.query.filter_by(claimant_id=user.user_id).all()
+    claims = Claim.query.filter_by(user_id=user.user_id).all()
 
     return render_template(
         "CustomerDashbourd.html",
