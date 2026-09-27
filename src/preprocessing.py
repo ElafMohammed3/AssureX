@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# The libraries used in preprocessing
 
-# In[2]:
 
 
 from __future__ import annotations
@@ -20,7 +18,6 @@ from sklearn.preprocessing import OneHotEncoder,StandardScaler
 
 # All the features in dataset
 
-# In[3]:
 
 
 DATE_COLUMNS = [
@@ -89,9 +86,7 @@ DATE_ORIGIN = pd.Timestamp("2020-01-01")
 
 
 
-# validation and safe loading of model inputs
 
-# In[4]:
 
 
 def load_feature_manifest(path: str | Path ) -> list[str]:
@@ -107,11 +102,7 @@ def load_feature_manifest(path: str | Path ) -> list[str]:
     return features
 
 
-# Translates Dates &
-# Filters Unused Dates &
-# Standardizes Feature Naming
 
-# In[5]:
 
 
 def date_feature_names(feature_names:list[str]):
@@ -130,9 +121,7 @@ def date_feature_names(feature_names:list[str]):
 
 
 
-# Feature Transformation (Turning Raw Data into Numbers) & Missing Value Management (Handling NaNs) & Pipeline Standardization & Safety
 
-# In[6]:
 
 
 def prepare_features(
@@ -206,9 +195,7 @@ def prepare_features(
     return X      
 
 
-# eparates Columns into Two Groups & Applies Custom Processing to Each Group in Parallel &  Combines Everything Together
 
-# In[7]:
 
 
 def build_preprocessor(

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# The Libraries
 
-# In[9]:
 
 
 from __future__ import annotations
@@ -12,9 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 
-# Defines the standard dataset partitions
 
-# In[10]:
 
 
 SPLITS = ("train", "validation", "test")
@@ -39,7 +35,6 @@ def find_dataset_root() -> Path:
     )
 
 
-# In[11]:
 
 
 def load_feature_manifest(
@@ -73,7 +68,6 @@ def load_feature_manifest(
     return features
 
 
-# In[12]:
 
 
 def read_split(
@@ -92,7 +86,6 @@ def read_split(
     return pd.read_csv(csv_path)
 
 
-# In[13]:
 
 
 def validate_split(
@@ -142,7 +135,6 @@ def validate_split(
             )
 
 
-# In[14]:
 
 
 def load_datasets(
@@ -193,7 +185,6 @@ def load_datasets(
     )
 
 
-# In[15]:
 
 
 if __name__ == "__main__":

@@ -1053,6 +1053,8 @@ def load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
 
 
 def yes_no(value: Any) -> str:
+    if isinstance(value, str):
+        return "Yes" if value.strip().lower() in {"true", "yes", "1", "y"} else "No"
     return "Yes" if bool(value) else "No"
 
 
@@ -1124,14 +1126,25 @@ def draw_field(
     text_color: tuple[int, int, int],
 ) -> int:
     draw.text((x, y), label, font=label_font, fill=accent)
+
+    label_bottom = draw.textbbox((x, y), label, font=label_font)[3]
     lines = wrap_lines(draw, value, value_font, width)
-    draw.multiline_text((x, y + 20), "\n".join(lines), font=value_font, fill=text_color, spacing=3)
-    return 24 + len(lines) * 19
+    spacing = 8
+    text_y = label_bottom + 10
+
+    draw.multiline_text(
+        (x, text_y), "\n".join(lines), font=value_font, fill=text_color, spacing=spacing
+    )
+
+    ascent, descent = value_font.getmetrics()
+    line_height = ascent + descent + spacing
+    field_bottom = text_y + len(lines) * line_height
+    return field_bottom - y + 28
 
 
 def generate_claim_card(record: dict[str, Any], output_path: Path, variant: int = 1) -> None:
     """Render facts only. Never render class, prediction, confidence or decision."""
-    width, height = 900, 700
+    width, height = 1600, 1600
     if variant == 1:
         background, header, accent, text_color = (248, 250, 252), (22, 55, 92), (22, 55, 92), (28, 32, 38)
     else:
@@ -1139,29 +1152,50 @@ def generate_claim_card(record: dict[str, Any], output_path: Path, variant: int 
 
     image = Image.new("RGB", (width, height), background)
     draw = ImageDraw.Draw(image)
-    draw.rectangle((0, 0, width, 78), fill=header)
-    draw.text((28, 18), "ASSUREX CLAIM SUMMARY CARD", font=load_font(26, True), fill=(255, 255, 255))
+
+    title_font = load_font(60, True)
+    subtitle_font = load_font(36)
+    header_height = 160
+
+    draw.rectangle((0, 0, width, header_height), fill=header)
+    draw.text((40, 24), "ASSUREX CLAIM SUMMARY CARD", font=title_font, fill=(255, 255, 255))
     draw.text(
-        (30, 50),
+        (42, 108),
         f"Claim ID: {record['claim_id']} | {record['product_category']}",
-        font=load_font(16),
+        font=subtitle_font,
         fill=(225, 235, 245),
     )
 
     entries = card_entries(record, variant)
-    if variant == 1:
-        y = 100
-        for label, value in entries:
-            y += draw_field(draw, 30, y, label, value, width - 60, load_font(14, True), load_font(16), accent, text_color)
-    else:
-        left_x, right_x, column_width = 30, 465, 390
-        y_left = y_right = 105
-        for index, (label, value) in enumerate(entries):
-            if index < 5:
-                y_left += draw_field(draw, left_x, y_left, label, value, column_width, load_font(14, True), load_font(16), accent, text_color)
-            else:
-                y_right += draw_field(draw, right_x, y_right, label, value, column_width, load_font(14, True), load_font(16), accent, text_color)
+    label_font = load_font(42, True)
+    value_font = load_font(52)
 
+    columns = 3
+    margin = 40
+    gap = 40
+    column_width = (width - margin * 2 - gap * (columns - 1)) // columns
+    y_top = header_height + 40
+    per_column = (len(entries) + columns - 1) // columns
+
+    y_tracks: dict[int, int] = {}
+    overflow: list[str] = []
+
+    for index, (label, value) in enumerate(entries):
+        column = index // per_column
+        x = margin + column * (column_width + gap)
+        y = y_tracks.get(column, y_top)
+
+        used = draw_field(
+            draw, x, y, label, value, column_width,
+            label_font, value_font, accent, text_color,
+        )
+        y_tracks[column] = y + used
+
+        if y_tracks[column] > height - margin:
+            overflow.append(f"{label} -> {y_tracks[column]}px")
+
+    if overflow:
+        print(f"OVERFLOW {output_path.name}: " + "; ".join(overflow))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     image.save(output_path)
 

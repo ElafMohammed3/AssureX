@@ -1,0 +1,47 @@
+{
+  "total_claims": 1500,
+  "class_counts": {
+    "Invalid Claim": 500,
+    "Manual Review": 500,
+    "Valid Claim": 500
+  },
+  "split_counts": {
+    "train": 1050,
+    "test": 225,
+    "validation": 225
+  },
+  "category_counts": {
+    "Television": 499,
+    "Laptop": 500,
+    "Smartphone": 501
+  },
+  "scenario_counts": {
+    "invalid_receipt": 90,
+    "unauthorized_repair": 100,
+    "missing_mandatory_document": 110,
+    "excluded_damage": 110,
+    "late_reporting": 50,
+    "extended_warranty": 60,
+    "duplicate_claim": 100,
+    "standard_covered": 200,
+    "serial_mismatch": 90,
+    "borderline_reporting": 60,
+    "service_center_unclear": 50,
+    "previous_authorized_repair": 80,
+    "complex_covered": 60,
+    "expired_warranty": 120,
+    "near_expiry_boundary": 100,
+    "contradictory_information": 90,
+    "replacement_not_eligible": 30
+  },
+  "card_counts": {
+    "test": 225,
+    "train": 2100,
+    "validation": 225
+  },
+  "document_rows": 9000,
+  "duplicate_document_hashes": 300,
+  "missing_document_claims": 110,
+  "contradiction_claims": 180,
+  "expired_claims": 120
+}

@@ -1,0 +1,137 @@
+{
+  "dataset_name": "AssureX Claim Engine Common Warranty Dataset",
+  "srs_reference": "AssureX Claim Engine SRS, section 1.2",
+  "total_claims": 1500,
+  "class_totals": {
+    "Valid Claim": 500,
+    "Invalid Claim": 500,
+    "Manual Review": 500
+  },
+  "scenarios": [
+    {
+      "scenario": "standard_covered",
+      "claim_class": "Valid Claim",
+      "count": 200,
+      "description": "Covered fault, active warranty, valid receipt, matched serial and complete evidence.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "near_expiry_boundary",
+      "claim_class": "Valid Claim",
+      "count": 100,
+      "description": "Covered fault close to expiry but submitted before the expiry boundary.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "previous_authorized_repair",
+      "claim_class": "Valid Claim",
+      "count": 80,
+      "description": "Covered fault after an authorized repair that does not breach the replacement threshold.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "extended_warranty",
+      "claim_class": "Valid Claim",
+      "count": 60,
+      "description": "Covered fault under an extended warranty with valid documents.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "complex_covered",
+      "claim_class": "Valid Claim",
+      "count": 60,
+      "description": "Covered fault with a longer repair history and supporting diagnostic evidence.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "expired_warranty",
+      "claim_class": "Invalid Claim",
+      "count": 120,
+      "description": "Fault and claim occur after the configured warranty expiry date.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "excluded_damage",
+      "claim_class": "Invalid Claim",
+      "count": 110,
+      "description": "Fault matches a policy exclusion such as physical, liquid, surge or unauthorized damage.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "unauthorized_repair",
+      "claim_class": "Invalid Claim",
+      "count": 100,
+      "description": "Repair was performed outside an authorized service center.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "invalid_receipt",
+      "claim_class": "Invalid Claim",
+      "count": 90,
+      "description": "A receipt is present but invalid and purchase information is inconsistent.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "late_reporting",
+      "claim_class": "Invalid Claim",
+      "count": 50,
+      "description": "The claim was reported after the category reporting period.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "replacement_not_eligible",
+      "claim_class": "Invalid Claim",
+      "count": 30,
+      "description": "Replacement is requested before the policy repair threshold is reached.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "missing_mandatory_document",
+      "claim_class": "Manual Review",
+      "count": 110,
+      "description": "One or more category-specific mandatory documents are absent.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "serial_mismatch",
+      "claim_class": "Manual Review",
+      "count": 90,
+      "description": "The receipt serial number conflicts with the product serial number.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "duplicate_claim",
+      "claim_class": "Manual Review",
+      "count": 100,
+      "description": "Two records share a product, invoice, serial and claim facts in one duplicate group.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "contradictory_information",
+      "claim_class": "Manual Review",
+      "count": 90,
+      "description": "Dates, serial numbers or model evidence contain a deterministic conflict.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "borderline_reporting",
+      "claim_class": "Manual Review",
+      "count": 60,
+      "description": "Claim is submitted on the warranty expiry boundary and requires review.",
+      "source": "SRS section 1.2 scenario requirements"
+    },
+    {
+      "scenario": "service_center_unclear",
+      "claim_class": "Manual Review",
+      "count": 50,
+      "description": "Service-center authorization is unclear without confirmed unauthorized repair.",
+      "source": "SRS section 1.2 scenario requirements"
+    }
+  ],
+  "notes": [
+    "The dataset is generated locally; no external dataset is used.",
+    "The same records are rendered to CSV and Claim Summary Cards.",
+    "Duplicate groups are kept inside one data split.",
+    "Audit and rule outputs are excluded from model inputs."
+  ]
+}
