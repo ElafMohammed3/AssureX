@@ -1,9 +1,29 @@
+from __future__ import annotations
+
+import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+from flask import (
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from urllib.parse import quote_plus
-import os
-
+# import os
+from claim_service import derive_claim_features, persist_submission  # noqa: E402
+from decision_engine import decide_from_evaluation  # noqa: E402
+from database.database import app  # noqa: E402
 
 # ============================================================
 # FLASK CONFIGURATION
@@ -14,23 +34,67 @@ app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
 
 
-# ============================================================
-# DATABASE CONFIGURATION
-# ============================================================
-#
-# OPTION 1:
-# Put your MySQL connection values here.
-#
-# OPTION 2:
-# Use environment variables.
-#
-# Example:
-# DB_USER=root
-# DB_PASSWORD=1234
-# DB_HOST=localhost
-# DB_PORT=3306
-# DB_NAME=assurex
-#
+PROJECT_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from database import (  # noqa: E402
+    Claim,
+    Evaluation,
+    Product,
+    ReviewAction,
+    User,
+    Warranty,
+    db,
+    initialize_database,
+)
+
+app.template_folder = str(PROJECT_ROOT / "templates")
+app.static_folder = str(PROJECT_ROOT / "static")
+app.secret_key = os.getenv("ASSUREX_SECRET_KEY", "dev-secret-change-me")
+
+DATASET_ROOT = PROJECT_ROOT / "dataset"
+POLICY_DIR = DATASET_ROOT / "policies"
+ARTIFACT_DIR = PROJECT_ROOT / "models" / "tabular"
+
+
+# SRS xlviii requires every prediction to record which model version produced
+# it. Read it from the trained metrics rather than duplicating a literal, so
+# retraining updates the recorded version automatically.
+def _read_model_version() -> str:
+    metrics = ARTIFACT_DIR / "metrics.json"
+
+    if not metrics.is_file():
+        return "unknown"
+
+    try:
+        payload = json.loads(metrics.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return "unknown"
+
+    return str(payload.get("model_version", "unknown"))
+
+
+MODEL_VERSION = _read_model_version()
+
+# These must match the SQLAlchemy Enum values declared in database/database.py.
+# Storing anything else raises LookupError on commit.
+ROLE_CUSTOMER = "Customer"
+ROLE_SERVICE_CENTER = "Service-center employee"
+ROLE_REVIEWER = "Claim reviewer"
+ROLE_ADMIN = "Administrator"
+
+ROLES = (ROLE_CUSTOMER, ROLE_SERVICE_CENTER, ROLE_REVIEWER, ROLE_ADMIN)
+REVIEW_ROLES = (ROLE_REVIEWER, ROLE_ADMIN)
+
+ACTION_APPROVE = "Approve"
+ACTION_REJECT = "Reject"
+ACTION_REQUEST_INFO = "Request Additional Information"
+ACTION_OVERRIDE = "Override"
+
+_pipeline_cache: dict[str, object] = {}
+
+
 
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
@@ -1340,122 +1404,19 @@ def user_management():
                            claims=claims,search=search,category=category, status=status)
 
 
-# ============================================================
-# RUN APPLICATION
-# ============================================================
+# # ============================================================
+# # RUN APPLICATION
+# # ============================================================
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    app.run(
-        host="127.0.0.1",
-        port=5000,
-        debug=True
-    )
-"""
-Flask entry point for the AssureX Claim Engine.
-
-Run it with:
-
-    py -3 app.py
-
-By default this targets MySQL using the DB_* environment variables. To run
-with no database server installed, use SQLite:
-
-    set ASSUREX_DATABASE_URL=sqlite:///assurex.db
-    py -3 app.py
-
-SRS coverage provided by this module:
-    i, ii     registration, login, logout, role-based access
-    xl, xli   customer and administrator dashboards
-    xlii      search and filtering entry points
-    xviii, xix  Python model prediction and three-class confidence
-    xxv       warranty rule validation
-"""
-
-from __future__ import annotations
-
-import json
-import os
-import sys
-from datetime import datetime
-from pathlib import Path
-
-from flask import (
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-)
-from werkzeug.security import check_password_hash, generate_password_hash
-
-PROJECT_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
-
-from database import (  # noqa: E402
-    Claim,
-    Evaluation,
-    Product,
-    ReviewAction,
-    User,
-    Warranty,
-    db,
-    initialize_database,
-)
-from claim_service import derive_claim_features, persist_submission  # noqa: E402
-from decision_engine import decide_from_evaluation  # noqa: E402
-
-# The database module created its own Flask instance, so point it at the
-# repository-level template and static folders rather than database/.
-from database.database import app  # noqa: E402
-
-app.template_folder = str(PROJECT_ROOT / "templates")
-app.static_folder = str(PROJECT_ROOT / "static")
-app.secret_key = os.getenv("ASSUREX_SECRET_KEY", "dev-secret-change-me")
-
-DATASET_ROOT = PROJECT_ROOT / "dataset"
-POLICY_DIR = DATASET_ROOT / "policies"
-ARTIFACT_DIR = PROJECT_ROOT / "models" / "tabular"
+#     app.run(
+#         host="127.0.0.1",
+#         port=5000,
+#         debug=True
+#     )
 
 
-# SRS xlviii requires every prediction to record which model version produced
-# it. Read it from the trained metrics rather than duplicating a literal, so
-# retraining updates the recorded version automatically.
-def _read_model_version() -> str:
-    metrics = ARTIFACT_DIR / "metrics.json"
-
-    if not metrics.is_file():
-        return "unknown"
-
-    try:
-        payload = json.loads(metrics.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return "unknown"
-
-    return str(payload.get("model_version", "unknown"))
-
-
-MODEL_VERSION = _read_model_version()
-
-# These must match the SQLAlchemy Enum values declared in database/database.py.
-# Storing anything else raises LookupError on commit.
-ROLE_CUSTOMER = "Customer"
-ROLE_SERVICE_CENTER = "Service-center employee"
-ROLE_REVIEWER = "Claim reviewer"
-ROLE_ADMIN = "Administrator"
-
-ROLES = (ROLE_CUSTOMER, ROLE_SERVICE_CENTER, ROLE_REVIEWER, ROLE_ADMIN)
-REVIEW_ROLES = (ROLE_REVIEWER, ROLE_ADMIN)
-
-ACTION_APPROVE = "Approve"
-ACTION_REJECT = "Reject"
-ACTION_REQUEST_INFO = "Request Additional Information"
-ACTION_OVERRIDE = "Override"
-
-_pipeline_cache: dict[str, object] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -1481,12 +1442,12 @@ def get_pipeline():
     return _pipeline_cache["pipeline"]
 
 
-def get_policies() -> dict:
-    if "policies" not in _pipeline_cache:
-        from rule_engine import load_policies
+# def get_policies() -> dict:
+#     if "policies" not in _pipeline_cache:
+#         from rule_engine import load_policies
 
-        _pipeline_cache["policies"] = load_policies(POLICY_DIR)
-    return _pipeline_cache["policies"]
+#         _pipeline_cache["policies"] = load_policies(POLICY_DIR)
+#     return _pipeline_cache["policies"]
 
 
 def evaluate_submission(form: dict) -> dict:
@@ -1496,53 +1457,53 @@ def evaluate_submission(form: dict) -> dict:
     SRS xix requires a confidence score for all three classes. SRS xxv requires
     independent rule validation. Neither depends on the other.
     """
-    from rule_engine import evaluate_claim
+    # from rule_engine import evaluate_claim
 
-    claim = {
-        "claim_id": form.get("claim_id") or "PENDING",
-        "product_category": form.get("product_category", ""),
-        "brand": form.get("brand", ""),
-        "model": form.get("model", ""),
-        "retailer": form.get("retailer", ""),
-        "purchase_date": form.get("purchase_date", ""),
-        "purchase_price": float(form.get("purchase_price") or 0),
-        "purchase_information_consistent": form.get("purchase_consistent") == "on",
-        "serial_number": form.get("serial_number", ""),
-        "receipt_serial_number": form.get("receipt_serial_number", ""),
-        "warranty_card_serial_number": form.get("warranty_card_serial_number", ""),
-        "product_image_serial_number": form.get("product_image_serial_number", ""),
-        "repair_record_serial_number": form.get("repair_record_serial_number", ""),
-        "receipt_model": form.get("model", ""),
-        "warranty_card_model": form.get("model", ""),
-        "product_image_model": form.get("model", ""),
-        "repair_record_model": form.get("model", ""),
-        "warranty_provider": form.get("warranty_provider", ""),
-        "warranty_start_date": form.get("purchase_date", ""),
-        "warranty_expiry_date": form.get("warranty_expiry_date", ""),
-        "warranty_duration_months": int(form.get("warranty_duration_months") or 12),
-        "extended_warranty": form.get("extended_warranty") == "on",
-        "fault_date": form.get("fault_date", ""),
-        "claim_date": form.get("claim_date", ""),
-        "last_repair_date": form.get("last_repair_date") or None,
-        "fault_category": form.get("fault_category", ""),
-        "fault_description": form.get("fault_description", ""),
-        "damage_type": form.get("damage_type", ""),
-        "physical_damage": form.get("physical_damage") == "on",
-        "liquid_damage": form.get("liquid_damage") == "on",
-        "unauthorized_repair": form.get("unauthorized_repair") == "on",
-        "authorized_service_center": form.get("authorized_service_center") == "on",
-        "previous_repair_count": int(form.get("previous_repair_count") or 0),
-        "previous_replacement": form.get("previous_replacement") == "on",
-        "previous_replacement_count": int(form.get("previous_replacement_count") or 0),
-        "replacement_requested": form.get("replacement_requested") == "on",
-        "receipt_available": form.get("receipt_available") == "on",
-        "receipt_valid": form.get("receipt_valid") == "on",
-        "warranty_card_available": form.get("warranty_card_available") == "on",
-        "product_image_available": form.get("product_image_available") == "on",
-        "serial_evidence_available": form.get("serial_evidence_available") == "on",
-        "fault_evidence_available": form.get("fault_evidence_available") == "on",
-        "repair_report_available": form.get("repair_report_available") == "on",
-    }
+    # claim = {
+    #     "claim_id": form.get("claim_id") or "PENDING",
+    #     "product_category": form.get("product_category", ""),
+    #     "brand": form.get("brand", ""),
+    #     "model": form.get("model", ""),
+    #     "retailer": form.get("retailer", ""),
+    #     "purchase_date": form.get("purchase_date", ""),
+    #     "purchase_price": float(form.get("purchase_price") or 0),
+    #     "purchase_information_consistent": form.get("purchase_consistent") == "on",
+    #     "serial_number": form.get("serial_number", ""),
+    #     "receipt_serial_number": form.get("receipt_serial_number", ""),
+    #     "warranty_card_serial_number": form.get("warranty_card_serial_number", ""),
+    #     "product_image_serial_number": form.get("product_image_serial_number", ""),
+    #     "repair_record_serial_number": form.get("repair_record_serial_number", ""),
+    #     "receipt_model": form.get("model", ""),
+    #     "warranty_card_model": form.get("model", ""),
+    #     "product_image_model": form.get("model", ""),
+    #     "repair_record_model": form.get("model", ""),
+    #     "warranty_provider": form.get("warranty_provider", ""),
+    #     "warranty_start_date": form.get("purchase_date", ""),
+    #     "warranty_expiry_date": form.get("warranty_expiry_date", ""),
+    #     "warranty_duration_months": int(form.get("warranty_duration_months") or 12),
+    #     "extended_warranty": form.get("extended_warranty") == "on",
+    #     "fault_date": form.get("fault_date", ""),
+    #     "claim_date": form.get("claim_date", ""),
+    #     "last_repair_date": form.get("last_repair_date") or None,
+    #     "fault_category": form.get("fault_category", ""),
+    #     "fault_description": form.get("fault_description", ""),
+    #     "damage_type": form.get("damage_type", ""),
+    #     "physical_damage": form.get("physical_damage") == "on",
+    #     "liquid_damage": form.get("liquid_damage") == "on",
+    #     "unauthorized_repair": form.get("unauthorized_repair") == "on",
+    #     "authorized_service_center": form.get("authorized_service_center") == "on",
+    #     "previous_repair_count": int(form.get("previous_repair_count") or 0),
+    #     "previous_replacement": form.get("previous_replacement") == "on",
+    #     "previous_replacement_count": int(form.get("previous_replacement_count") or 0),
+    #     "replacement_requested": form.get("replacement_requested") == "on",
+    #     "receipt_available": form.get("receipt_available") == "on",
+    #     "receipt_valid": form.get("receipt_valid") == "on",
+    #     "warranty_card_available": form.get("warranty_card_available") == "on",
+    #     "product_image_available": form.get("product_image_available") == "on",
+    #     "serial_evidence_available": form.get("serial_evidence_available") == "on",
+    #     "fault_evidence_available": form.get("fault_evidence_available") == "on",
+    #     "repair_report_available": form.get("repair_report_available") == "on",
+    # }
 
     # SRS xvi: derived fields must exist BEFORE classification. Without them the
     # numeric imputer receives empty strings, and `repair_history` -- the model's
@@ -1554,47 +1515,47 @@ def evaluate_submission(form: dict) -> dict:
     pipeline = get_pipeline()
     features = _pipeline_cache["features"]
 
-    from preprocessing import prepare_features
+    # from preprocessing import prepare_features
 
-    frame = prepare_features(
-        _as_frame(claim, features), list(features)
-    )
-    probabilities = pipeline.predict_proba(frame)[0]
-    classes = list(pipeline.named_steps["model"].classes_)
+#     frame = prepare_features(
+#         _as_frame(claim, features), list(features)
+#     )
+#     probabilities = pipeline.predict_proba(frame)[0]
+#     classes = list(pipeline.named_steps["model"].classes_)
 
-    prediction = {
-        "python_predicted_class": classes[int(probabilities.argmax())],
-        "python_confidence": {
-            name: round(float(p), 4) for name, p in zip(classes, probabilities)
-        },
-    }
+#     prediction = {
+#         "python_predicted_class": classes[int(probabilities.argmax())],
+#         "python_confidence": {
+#             name: round(float(p), 4) for name, p in zip(classes, probabilities)
+#         },
+#     }
 
-    rule_result = evaluate_claim(claim, get_policies())
-    prediction["rule_outcome"] = rule_result.outcome
-    prediction["rule_result"] = rule_result.as_dict()
-    prediction["derived_facts"] = {
-        key: claim[key]
-        for key in (
-            "product_age_days",
-            "reporting_days",
-            "warranty_remaining_days",
-            "warranty_status",
-            "days_since_last_repair",
-            "missing_documents_count",
-            "missing_documents",
-            "repair_history",
-            "supporting_evidence_available",
-        )
-    }
+#     rule_result = evaluate_claim(claim, get_policies())
+#     prediction["rule_outcome"] = rule_result.outcome
+#     prediction["rule_result"] = rule_result.as_dict()
+#     prediction["derived_facts"] = {
+#         key: claim[key]
+#         for key in (
+#             "product_age_days",
+#             "reporting_days",
+#             "warranty_remaining_days",
+#             "warranty_status",
+#             "days_since_last_repair",
+#             "missing_documents_count",
+#             "missing_documents",
+#             "repair_history",
+#             "supporting_evidence_available",
+#         )
+#     }
 
-    return prediction
+#     return prediction
 
 
-def _as_frame(claim: dict, features: list[str]):
-    import pandas as pd
+# def _as_frame(claim: dict, features: list[str]):
+#     import pandas as pd
 
-    row = {name: claim.get(name, "") for name in features}
-    return pd.DataFrame([row])
+#     row = {name: claim.get(name, "") for name in features}
+#     return pd.DataFrame([row])
 
 
 # ---------------------------------------------------------------------------
