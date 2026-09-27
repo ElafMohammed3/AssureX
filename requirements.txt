@@ -1,21 +1,30 @@
-# Dataset generation
-Pillow>=10.0
+# AssureX Claim Engine - runtime dependencies
+# Install with:  py -3 -m pip install -r requirements.txt
 
-# Planned web application and database
+# --- Web application (SRS 1.9.2) ---
 Flask>=3.0
 Flask-SQLAlchemy>=3.1
-PyMySQL>=1.1
+Werkzeug>=3.0
 python-dotenv>=1.0
 
-# Planned machine-learning pipeline
+# --- Database (SRS 1.9.2 allows MySQL or SQLite) ---
+PyMySQL>=1.1
+cryptography>=42.0
+
+# --- Machine learning pipeline (SRS 1.9.2) ---
 numpy>=1.24
 pandas>=2.0
 scikit-learn>=1.4
 joblib>=1.3
 matplotlib>=3.7
+seaborn>=0.13
 
-# Planned OCR integration
+# --- Dataset generation and Claim Summary Cards ---
+Pillow>=10.0
+
+# --- OCR and document processing (SRS 1.9.2) ---
 pytesseract>=0.3.10
+opencv-python>=4.8
 
-# Testing
+# --- Testing (SRS deliverable 8) ---
 pytest>=8.0

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AssureX Claim Engine{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">AssureX Claim Engine</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto">
+        {% if current_user %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('create_claim') }}">New Claim</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('claims_queue') }}">Claims</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('my_products') }}">Products</a></li>
+          {% if current_user.role in ['Claim reviewer', 'Administrator'] %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('manual_review_queue') }}">Manual Review</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('warranty_rules_config') }}">Warranty Rules</a></li>
+          {% endif %}
+          {% if current_user.role == 'Administrator' %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('analytics_reports') }}">Analytics</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('audit_logs') }}">Audit</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('user_management') }}">Users</a></li>
+          {% endif %}
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav">
+        {% if current_user %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}">{{ current_user.full_name }}</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Sign out</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Sign in</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="container py-4 text-muted small border-top">
+  AssureX Claim Engine &middot; NextWave AI and ML &middot;
+  Python classification model + warranty rule engine.
+  No external generative-AI API is used for any claim decision.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

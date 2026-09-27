@@ -15,7 +15,10 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "3306")
 DB_NAME = os.getenv("DB_NAME", "assurex")
 
-DATABASE_URL = (
+# MySQL is the primary datastore. ASSUREX_DATABASE_URL overrides it, which lets
+# an evaluator run the application with no database server installed, for
+# example:  ASSUREX_DATABASE_URL=sqlite:///assurex.db  py -3 app.py
+DATABASE_URL = os.getenv("ASSUREX_DATABASE_URL") or (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}"
     f"@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 )
@@ -24,6 +27,8 @@ SERVER_DATABASE_URL = (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}"
     f"@{DB_HOST}:{DB_PORT}/?charset=utf8mb4"
 )
+
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -304,6 +309,10 @@ class ReviewAction(db.Model):
 
 
 def create_database():
+    """Create the MySQL schema. A no-op when running on SQLite."""
+    if IS_SQLITE:
+        return
+
     import pymysql
 
     connection = pymysql.connect(

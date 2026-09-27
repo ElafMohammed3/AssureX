@@ -1,7 +1,9 @@
 __pycache__/
 *.py[cod]
 dataset/final_run*/
+dataset_verify/
 .env
 .venv/
 venv/
 desktop.ini
+instance/

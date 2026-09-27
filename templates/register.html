@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Register &middot; AssureX{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 mb-3">Create an account</h1>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label" for="full_name">Full name</label>
+            <input class="form-control" id="full_name" name="full_name" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" name="email" type="email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" name="password" type="password" minlength="8" required>
+            <div class="form-text">At least 8 characters.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="role">Role</label>
+            <select class="form-select" id="role" name="role">
+              {% for role in ROLES %}
+                <option value="{{ role }}">{{ role.replace('_', ' ')|title }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Role-based access control (SRS i).</div>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Register</button>
+        </form>
+        <hr>
+        <p class="mb-0 small text-muted">
+          Already registered? <a href="{{ url_for('login') }}">Sign in</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

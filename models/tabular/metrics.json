@@ -1,0 +1,186 @@
+{
+  "generated_by": "ml/train_model.py",
+  "model_version": "1.0.0",
+  "random_state": 42,
+  "hyperparameters": {
+    "bootstrap": true,
+    "ccp_alpha": 0.0,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 300,
+    "n_jobs": -1,
+    "oob_score": false,
+    "random_state": 42,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "dataset": {
+    "train_rows": 1050,
+    "validation_rows": 225,
+    "test_rows": 225,
+    "model_features": 41,
+    "transformed_features": 161
+  },
+  "selection_rule": "highest validation macro F1",
+  "selected_model": "random_forest",
+  "validation_results": {
+    "logistic_regression": {
+      "accuracy": 0.8667,
+      "f1_macro": 0.8674,
+      "f1_weighted": 0.8674
+    },
+    "decision_tree": {
+      "accuracy": 0.9156,
+      "f1_macro": 0.9151,
+      "f1_weighted": 0.9151
+    },
+    "random_forest": {
+      "accuracy": 0.9244,
+      "f1_macro": 0.9237,
+      "f1_weighted": 0.9237
+    }
+  },
+  "cross_validation_f1_macro": {
+    "mean": 0.9744,
+    "std": 0.0088,
+    "folds": [
+      0.9811,
+      0.981,
+      0.9762,
+      0.9573,
+      0.9763
+    ]
+  },
+  "test_results": {
+    "accuracy": 0.9289,
+    "f1_macro": 0.9287,
+    "f1_weighted": 0.9287
+  },
+  "test_per_class": {
+    "Invalid Claim": {
+      "precision": 1.0,
+      "recall": 0.9866666666666667,
+      "f1-score": 0.9932885906040269,
+      "support": 75.0
+    },
+    "Manual Review": {
+      "precision": 0.9838709677419355,
+      "recall": 0.8133333333333334,
+      "f1-score": 0.8905109489051095,
+      "support": 75.0
+    },
+    "Valid Claim": {
+      "precision": 0.8314606741573034,
+      "recall": 0.9866666666666667,
+      "f1-score": 0.9024390243902439,
+      "support": 75.0
+    },
+    "accuracy": 0.9288888888888889,
+    "macro avg": {
+      "precision": 0.9384438806330797,
+      "recall": 0.9288888888888889,
+      "f1-score": 0.92874618796646,
+      "support": 225.0
+    },
+    "weighted avg": {
+      "precision": 0.9384438806330797,
+      "recall": 0.9288888888888889,
+      "f1-score": 0.9287461879664601,
+      "support": 225.0
+    }
+  },
+  "feature_importance": {
+    "mapped_total": 1.0,
+    "top_15": [
+      {
+        "feature": "repair_history",
+        "importance": 0.11430082311791767,
+        "cumulative_importance": 0.11430082311791767
+      },
+      {
+        "feature": "supporting_evidence_available",
+        "importance": 0.09771610120696689,
+        "cumulative_importance": 0.21201692432488456
+      },
+      {
+        "feature": "damage_type",
+        "importance": 0.09195027592406409,
+        "cumulative_importance": 0.30396720024894863
+      },
+      {
+        "feature": "warranty_remaining_days",
+        "importance": 0.09170542351490549,
+        "cumulative_importance": 0.39567262376385415
+      },
+      {
+        "feature": "product_age_days",
+        "importance": 0.05090780111899886,
+        "cumulative_importance": 0.446580424882853
+      },
+      {
+        "feature": "fault_date",
+        "importance": 0.04804891693888898,
+        "cumulative_importance": 0.49462934182174195
+      },
+      {
+        "feature": "claim_date",
+        "importance": 0.0452203214812108,
+        "cumulative_importance": 0.5398496633029528
+      },
+      {
+        "feature": "warranty_expiry_date",
+        "importance": 0.038761223854641785,
+        "cumulative_importance": 0.5786108871575946
+      },
+      {
+        "feature": "purchase_information_consistent",
+        "importance": 0.03687815139603239,
+        "cumulative_importance": 0.6154890385536269
+      },
+      {
+        "feature": "receipt_valid",
+        "importance": 0.03666872276936639,
+        "cumulative_importance": 0.6521577613229933
+      },
+      {
+        "feature": "warranty_start_date",
+        "importance": 0.033418455731996234,
+        "cumulative_importance": 0.6855762170549895
+      },
+      {
+        "feature": "purchase_date",
+        "importance": 0.03181739129686974,
+        "cumulative_importance": 0.7173936083518593
+      },
+      {
+        "feature": "reporting_days",
+        "importance": 0.029820971601466142,
+        "cumulative_importance": 0.7472145799533254
+      },
+      {
+        "feature": "fault_description",
+        "importance": 0.025660865138817206,
+        "cumulative_importance": 0.7728754450921426
+      },
+      {
+        "feature": "unauthorized_repair",
+        "importance": 0.023828751768838443,
+        "cumulative_importance": 0.796704196860981
+      }
+    ]
+  },
+  "sample_predictions": {
+    "file": "models/tabular/sample_test_predictions.csv",
+    "rows": 30,
+    "correct": 27
+  }
+}

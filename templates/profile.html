@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My profile &middot; AssureX{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 mb-3">Profile</h1>
+        <dl class="row">
+          <dt class="col-sm-3">User ID</dt><dd class="col-sm-9">{{ user.user_id }}</dd>
+          <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ user.email }}</dd>
+          <dt class="col-sm-3">Role</dt><dd class="col-sm-9">{{ user.role }}</dd>
+          <dt class="col-sm-3">Registered</dt><dd class="col-sm-9">{{ user.created_at }}</dd>
+        </dl>
+        <hr>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label" for="full_name">Full name</label>
+            <input class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="phone">Phone</label>
+            <input class="form-control" id="phone" name="phone" value="{{ user.phone or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="address">Address</label>
+            <input class="form-control" id="address" name="address" value="{{ user.address or '' }}">
+          </div>
+          <button class="btn btn-primary" type="submit">Save changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

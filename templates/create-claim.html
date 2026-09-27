@@ -246,14 +246,17 @@
 </head>
 <body>
 
+{% include "_nav.html" %}
+
+
     <nav class="desktop-navbar">
         <div class="brand-logo">
             <i class="fa-solid fa-shield-halved"></i> AssureX
         </div>
         <ul class="nav-links">
             <li><a href="#">Dashboard</a></li>
-            <li><a href="create-claim.html" class="active">Submit Claim</a></li>
-            <li><a href="claim-details.html">Claim Details</a></li>
+            <li><a href="{{ url_for('create_claim') }}" class="active">Submit Claim</a></li>
+            <li><a href="{{ url_for('claims_queue') }}">Claim Details</a></li>
         </ul>
     </nav>
 
