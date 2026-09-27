@@ -33,17 +33,25 @@ from database import Claim, Evaluation, Product, Warranty, WarrantyPolicy, db
 from rule_engine import detect_missing_documents
 
 
-def derive_numeric_facts(
+def derive_claim_features(
     claim: dict[str, Any],
     policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
-    Compute the derived numeric model inputs that SRS xvi requires.
+    Compute every derived model input that SRS xvi requires.
 
-    The training CSV carries these precomputed, so a web submission would
-    otherwise send empty strings into SimpleImputer, which fails on the median
-    strategy. Deriving them here keeps the web path and the training path
-    describing the same features.
+    The training CSV carries these precomputed. A web submission does not, and
+    omitting them is not harmless:
+
+    * the numeric imputer raises "Cannot use median strategy with non-numeric
+      data" when the derived counts arrive as empty strings;
+    * `repair_history` is the strongest single feature in the trained model, so
+      sending it blank removes the model's most important signal and collapses
+      predictions towards the majority class.
+
+    Deriving them here keeps the web path and the training path describing
+    identical features, which is what makes a web prediction comparable to the
+    reported 92.89% test accuracy.
     """
     def as_date(value: Any) -> date | None:
         if not value:
@@ -70,14 +78,67 @@ def derive_numeric_facts(
             (claimed - last_repair).days if claimed and last_repair else 0
         ),
         "missing_documents_count": 0,
+        "missing_documents": "None",
     }
 
-    if policy is not None:
-        facts["missing_documents_count"] = len(
-            detect_missing_documents(claim, dict(policy))
+    def as_bool(name: str) -> bool:
+        value = claim.get(name)
+        if isinstance(value, str):
+            return value.strip().lower() in {"on", "true", "1", "yes"}
+        return bool(value)
+
+    def as_int(name: str) -> int:
+        try:
+            return int(float(claim.get(name) or 0))
+        except (TypeError, ValueError):
+            return 0
+
+    # repair_history is one-hot encoded, so it must use the same wording as the
+    # dataset. Any other string lands in a category the model has never seen.
+    repairs = as_int("previous_repair_count")
+    if repairs <= 0:
+        facts["repair_history"] = "No previous repairs"
+    elif as_bool("unauthorized_repair"):
+        facts["repair_history"] = "Unauthorized repair reported"
+    elif as_bool("replacement_requested"):
+        facts["repair_history"] = (
+            "Replacement requested before policy repair threshold"
         )
+    elif not as_bool("authorized_service_center"):
+        facts["repair_history"] = "Service-center authorization is unclear"
+    elif repairs > 1:
+        facts["repair_history"] = (
+            "Complex repair history with supporting diagnostics"
+        )
+    else:
+        facts["repair_history"] = "One or more authorized repairs"
+
+    if policy is not None:
+        missing = detect_missing_documents(claim, dict(policy))
+        facts["missing_documents"] = "|".join(missing) if missing else "None"
+        facts["missing_documents_count"] = len(missing)
+
+    # Supporting evidence requires every mandatory document and no conflict.
+    facts["supporting_evidence_available"] = (
+        as_bool("receipt_available")
+        and as_bool("warranty_card_available")
+        and as_bool("product_image_available")
+        and as_bool("serial_evidence_available")
+        and as_bool("fault_evidence_available")
+        and as_bool("repair_report_available")
+        and facts["missing_documents_count"] == 0
+    )
+
+    # An absent damage type must reach the encoder as NaN so prepare_features
+    # normalises it to "Missing", exactly as the training CSV does.
+    if not str(claim.get("damage_type") or "").strip():
+        claim["damage_type"] = None
 
     return facts
+
+
+# Backwards-compatible alias for the earlier numeric-only helper.
+derive_numeric_facts = derive_claim_features
 
 # --- SRS xxiv five-way status -> Evaluation.model_consistency Enum ---------
 CONSISTENCY_ENUM = {

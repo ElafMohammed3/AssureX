@@ -52,7 +52,7 @@ from database import (  # noqa: E402
     db,
     initialize_database,
 )
-from claim_service import derive_numeric_facts, persist_submission  # noqa: E402
+from claim_service import derive_claim_features, persist_submission  # noqa: E402
 from decision_engine import decide_from_evaluation  # noqa: E402
 
 # The database module created its own Flask instance, so point it at the
@@ -192,10 +192,11 @@ def evaluate_submission(form: dict) -> dict:
     }
 
     # SRS xvi: derived fields must exist BEFORE classification. Without them the
-    # numeric imputer receives empty strings and the median strategy raises
-    # "Cannot use median strategy with non-numeric data".
+    # numeric imputer receives empty strings, and `repair_history` -- the model's
+    # strongest feature -- arrives blank, which collapses predictions towards
+    # the majority class.
     policy = get_policies().get(claim.get("product_category"))
-    claim.update(derive_numeric_facts(claim, policy))
+    claim.update(derive_claim_features(claim, policy))
 
     pipeline = get_pipeline()
     features = _pipeline_cache["features"]
@@ -227,6 +228,9 @@ def evaluate_submission(form: dict) -> dict:
             "warranty_status",
             "days_since_last_repair",
             "missing_documents_count",
+            "missing_documents",
+            "repair_history",
+            "supporting_evidence_available",
         )
     }
 
