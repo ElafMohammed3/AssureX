@@ -40,6 +40,7 @@ ROUTES = [
     "/products",
     "/documents",
     "/claims/status",
+    "/claims/submit",
     "/manual-review",
     "/analytics",
     "/audit",

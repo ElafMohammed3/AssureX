@@ -224,13 +224,16 @@
 </head>
 <body>
 
+{% include "_nav.html" %}
+
+
     <nav class="desktop-navbar">
         <div class="brand-logo">
             <i class="fa-solid fa-shield-halved"></i> AssureX
         </div>
         <ul class="nav-links">
             <li><a href="#">Dashboard</a></li>
-            <li><a href="create-claim.html">Submit Claim</a></li>
+            <li><a href="{{ url_for('create_claim') }}">Submit Claim</a></li>
             <li><a href="#" class="active">Claim Details</a></li>
         </ul>
     </nav>
@@ -241,7 +244,7 @@
                 <h1>Claim Evaluation Details</h1>
                 <p style="color: var(--text-muted); font-size: 0.9rem;">Automated Real-Time AI Analysis & Evidence Verification</p>
             </div>
-            <a href="create-claim.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Create New Claim</a>
+            <a href="{{ url_for('create_claim') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Create New Claim</a>
         </div>
 
         <div class="details-grid">

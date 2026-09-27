@@ -257,13 +257,16 @@ def inject_globals():
 
 @app.route("/")
 def index():
+    """Landing page. Signed-in users go straight to their dashboard."""
     user = current_user()
+
     if user is None:
-        return redirect(url_for("login"))
+        return render_template("index.html")
+
     if user.role == ROLE_ADMIN:
         return redirect(url_for("admin_dashboard"))
-    return redirect(url_for("customer_dashboard"))
 
+    return redirect(url_for("customer_dashboard"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -528,7 +531,12 @@ def claim_status():
 @app.route("/claims/submit")
 @login_required
 def submit_claim():
-    return redirect(url_for("create_claim"))
+    return render_template(
+        "submit_claim.html",
+        products=Product.query.filter_by(
+            user_id=current_user().user_id
+        ).all(),
+    )
 
 
 @app.route("/analytics")

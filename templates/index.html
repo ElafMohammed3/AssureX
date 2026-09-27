@@ -11,6 +11,9 @@
 </head>
 <body>
 
+{% include "_nav.html" %}
+
+
     <div class="login-wrapper">
          <div class="brand-side">
             <div class="brand-content">
@@ -78,7 +81,7 @@
 
                
                 <div class="register-link">
-                    Don't have an account? <a href="register.html">Create an account</a>
+                    Don't have an account? <a href="{{ url_for('register') }}">Create an account</a>
                 </div>
 
             </div>

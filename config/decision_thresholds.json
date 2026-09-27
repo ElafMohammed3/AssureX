@@ -1,0 +1,22 @@
+{
+  "_comment": "Decision-engine thresholds. SRS 1.8 item 5 requires the team to be able to change a confidence threshold during final evaluation, so every threshold lives in this file and never in Python source.",
+
+  "comparison": {
+    "_comment": "Confidence Difference = |Python top-class confidence - TM top-class confidence|, per SRS Step 10.",
+    "strong_match_max_difference": 0.05,
+    "acceptable_match_max_difference": 0.15,
+    "weak_match_max_difference": 0.30,
+    "minimum_top_confidence": 0.70,
+    "uncertain_below_confidence": 0.50,
+    "require_image_model": false
+  },
+
+  "decision": {
+    "_comment": "Priority order is fixed: hard fail, then rule-triggered review, then model agreement, then the models themselves.",
+    "hard_fail_forces_invalid": true,
+    "rule_review_forces_manual": true,
+    "weak_match_forces_manual": true,
+    "image_model_can_upgrade_decision": false,
+    "_note_require_image_model": "When false, a missing Teachable Machine model is reported as a degraded comparison but does not by itself force every claim into manual review. Set true once the image model is trained, so that losing it at runtime is treated as a fault rather than a normal condition."
+  }
+}
