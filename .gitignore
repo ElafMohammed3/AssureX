@@ -7,3 +7,4 @@ dataset_verify/
 venv/
 desktop.ini
 instance/
+node_modules/

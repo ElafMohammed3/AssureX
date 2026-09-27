@@ -1093,6 +1093,19 @@ def card_entries(record: dict[str, Any], variant: int) -> list[tuple[str, str]]:
             f"Liquid: {yes_no(record['liquid_damage'])} | "
             f"Unauthorized repair: {yes_no(record['unauthorized_repair'])}",
         ),
+        ("DAMAGE TYPE", str(record["damage_type"])),
+        ("PURCHASE INFO", f"Consistent: {yes_no(record['purchase_information_consistent'])}"),
+        (
+            "REPLACEMENT",
+            f"Requested: {yes_no(record['replacement_requested'])} | "
+            f"Previous: {yes_no(record['previous_replacement'])}",
+        ),
+        (
+            "WARRANTY TERM",
+            f"{record['warranty_duration_months']} months | "
+            f"Extended: {yes_no(record['extended_warranty'])}",
+        ),
+    
     ]
 
 
@@ -1167,8 +1180,8 @@ def generate_claim_card(record: dict[str, Any], output_path: Path, variant: int 
     )
 
     entries = card_entries(record, variant)
-    label_font = load_font(42, True)
-    value_font = load_font(52)
+    label_font = load_font(38, True)
+    value_font = load_font(48)
 
     columns = 3
     margin = 40
