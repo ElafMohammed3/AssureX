@@ -21,6 +21,7 @@ SRS coverage provided by this module:
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from datetime import datetime
@@ -51,6 +52,8 @@ from database import (  # noqa: E402
     db,
     initialize_database,
 )
+from claim_service import derive_numeric_facts, persist_submission  # noqa: E402
+from decision_engine import decide_from_evaluation  # noqa: E402
 
 # The database module created its own Flask instance, so point it at the
 # repository-level template and static folders rather than database/.
@@ -63,6 +66,26 @@ app.secret_key = os.getenv("ASSUREX_SECRET_KEY", "dev-secret-change-me")
 DATASET_ROOT = PROJECT_ROOT / "dataset"
 POLICY_DIR = DATASET_ROOT / "policies"
 ARTIFACT_DIR = PROJECT_ROOT / "models" / "tabular"
+
+
+# SRS xlviii requires every prediction to record which model version produced
+# it. Read it from the trained metrics rather than duplicating a literal, so
+# retraining updates the recorded version automatically.
+def _read_model_version() -> str:
+    metrics = ARTIFACT_DIR / "metrics.json"
+
+    if not metrics.is_file():
+        return "unknown"
+
+    try:
+        payload = json.loads(metrics.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return "unknown"
+
+    return str(payload.get("model_version", "unknown"))
+
+
+MODEL_VERSION = _read_model_version()
 
 # These must match the SQLAlchemy Enum values declared in database/database.py.
 # Storing anything else raises LookupError on commit.
@@ -168,6 +191,12 @@ def evaluate_submission(form: dict) -> dict:
         "repair_report_available": form.get("repair_report_available") == "on",
     }
 
+    # SRS xvi: derived fields must exist BEFORE classification. Without them the
+    # numeric imputer receives empty strings and the median strategy raises
+    # "Cannot use median strategy with non-numeric data".
+    policy = get_policies().get(claim.get("product_category"))
+    claim.update(derive_numeric_facts(claim, policy))
+
     pipeline = get_pipeline()
     features = _pipeline_cache["features"]
 
@@ -189,6 +218,17 @@ def evaluate_submission(form: dict) -> dict:
     rule_result = evaluate_claim(claim, get_policies())
     prediction["rule_outcome"] = rule_result.outcome
     prediction["rule_result"] = rule_result.as_dict()
+    prediction["derived_facts"] = {
+        key: claim[key]
+        for key in (
+            "product_age_days",
+            "reporting_days",
+            "warranty_remaining_days",
+            "warranty_status",
+            "days_since_last_repair",
+            "missing_documents_count",
+        )
+    }
 
     return prediction
 
@@ -425,19 +465,52 @@ def claims_queue():
 @login_required
 def create_claim():
     if request.method == "POST":
+        form = request.form.to_dict()
+
         try:
-            result = evaluate_submission(request.form.to_dict())
+            result = evaluate_submission(form)
         except FileNotFoundError as error:
             flash(str(error), "danger")
-            return render_template("create-claim.html", form=request.form)
+            return render_template("create-claim.html", form=form)
         except Exception as error:  # noqa: BLE001 - surfaced to the user
             flash(f"Could not evaluate the claim: {error}", "danger")
-            return render_template("create-claim.html", form=request.form)
+            return render_template("create-claim.html", form=form)
+
+        # SRS xxxiv: combine the model result with the rule result.
+        decision = decide_from_evaluation(result, result.get("rule_result"))
+        result["final_decision"] = decision.final_decision
+        result["decision"] = decision.as_dict()
+        result["explanation"] = decision.explanation()
+
+        saved = None
+        try:
+            claim, evaluation = persist_submission(
+                current_user(),
+                form,
+                result,
+                decision,
+                MODEL_VERSION,
+            )
+            saved = claim
+        except Exception as error:  # noqa: BLE001 - never lose the evaluation
+            flash(
+                "The claim was evaluated but could not be saved: "
+                f"{error}",
+                "warning",
+            )
+
+        if saved is not None:
+            flash(
+                f"Claim {saved.claim_id} saved with decision "
+                f"{decision.final_decision}.",
+                "success",
+            )
+            return redirect(url_for("claim_details", claim_id=saved.claim_id))
 
         return render_template(
             "claim_result.html",
             result=result,
-            form=request.form,
+            form=form,
         )
 
     return render_template("create-claim.html", form={})

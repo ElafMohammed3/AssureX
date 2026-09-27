@@ -337,6 +337,22 @@ def _follow_models(
     return DECISION_MANUAL_REVIEW
 
 
+def _outcome_rows(rule_result: Any, group: str) -> list[tuple[str, str]]:
+    """Return (label, detail) pairs for one rule group."""
+    rows = _rule_field(rule_result, group, []) or []
+    pairs: list[tuple[str, str]] = []
+
+    for row in rows:
+        if isinstance(row, Mapping):
+            pairs.append((str(row.get("label", "")), str(row.get("detail", ""))))
+        else:
+            pairs.append(
+                (str(getattr(row, "label", "")), str(getattr(row, "detail", "")))
+            )
+
+    return [(label, detail) for label, detail in pairs if label]
+
+
 def _outcome_labels(rule_result: Any, group: str) -> list[str]:
     rows = _rule_field(rule_result, group, []) or []
     labels: list[str] = []
@@ -516,9 +532,12 @@ def decide(
     audit.append(f"Rule outcome: {rule_outcome}")
     audit.append(f"Model consistency: {comparison.status}")
 
-    for label in _outcome_labels(rule_result, "passed"):
-        supporting.append(label)
-    for label in _outcome_labels(rule_result, "passed"):
+    for label, detail in _outcome_rows(rule_result, "passed"):
+        # Include the detail, because a rule named "Warranty expired" reads as
+        # an accusation when it is listed under supporting factors. The detail
+        # is what disambiguates "the claim is expired" from "the expiry check
+        # passed with 120 days remaining".
+        supporting.append(f"{label} (check passed: {detail})" if detail else label)
         audit.append(f"rule passed: {label}")
 
     for row in hard_fail:
