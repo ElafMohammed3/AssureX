@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title%}AssureX {% endblock %}</title>
+   <link rel="stylesheet" href="..\static\main.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">AssureX Admin</div>
+        <ul class="nav-menu">
+            <li class="nav-item active">
+                <a   href="{{ url_for('dashboard') }}"
+                    class="
+                        nav-item
+                        {% if request.endpoint == 'dashboard' %}
+                            active
+                        {% endif %}
+                    ">Dashboard Overview</a>
+            </li>
+            <li class="nav-item">
+                <a href=" {{ url_for('all_claims') }}" class="nav-item
+                        {% if request.endpoint == 'all_claims' %}
+                            active
+                        {% endif %}">All Claims Queue</a>
+            </li>
+            <li class="nav-item"><a href=" {{ url_for('manual_review') }}" class="nav-item
+                        {% if request.endpoint == 'manual_review' %}
+                            active
+                        {% endif %}">Manual Review Queue</a></li>
+            <li class="nav-item"><a href=" {{ url_for('warranty_rules') }}" class="nav-item
+                        {% if request.endpoint == 'warranty_rules' %}
+                            active
+                        {% endif %}">Warranty Rules Config</a></li>
+            <li class="nav-item"><a href=" {{ url_for('analytics') }}" class="nav-item
+                        {% if request.endpoint == 'analytics' %}
+                            active
+                        {% endif %}">Analytics & Reports</a></li>
+            <li class="nav-item"><a href=" {{ url_for('audit_logs') }}" class="nav-item
+                        {% if request.endpoint == 'audit_logs' %}
+                            active
+                        {% endif %}">Audit Logs</a></li>
+            <li class="nav-item"><a href=" {{ url_for('user_management') }}" class="nav-item
+                        {% if request.endpoint == 'user_management' %}
+                            active
+                        {% endif %}">User Management</a></li>
+        </ul>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-header">
+            <h2>System Administration Dashboard</h2>
+            <div class="user-profile">
+                <div>
+                    <div style="font-weight: bold;">Admin User</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Role: System Administrator</div>
+                </div>
+                <div class="avatar">AD</div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            {% block content %}
+
+            {% endblock %}
+        </main>
+    </div>
+    <!-- <footer class="main-footer">
+
+
+        <p>
+            AlgoMaster  AssureX © 2026
+        </p>
+    </footer> -->
+</body>
+
+</html>

@@ -1,64 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AssureX Claim Engine - Analytics & Reports</title>
-    <style>
-        :root {
-            --bg-body: #F4F3F5;
-            --sidebar-bg: #2D080E;
-            --primary-burgundy: #4A0E17;
-            --accent-red: #801828;
-            --card-bg: #FFFFFF;
-            --text-dark: #1F1F1F;
-            --text-muted: #6C757D;
-            --border-radius: 18px;
-            --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.05);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-dark); display: flex; min-height: 100vh; overflow-x: hidden; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #FFFFFF; display: flex; flex-direction: column; padding: 30px 20px; flex-shrink: 0; }
-        .sidebar .brand { font-size: 24px; font-weight: bold; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; color: #FFFFFF; }
-        .sidebar .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-        .sidebar .nav-item a { color: rgba(255, 255, 255, 0.7); text-decoration: none; padding: 14px 18px; border-radius: 12px; display: block; transition: all 0.3s ease; font-size: 15px; }
-        .sidebar .nav-item.active a, .sidebar .nav-item a:hover { background-color: var(--primary-burgundy); color: #FFFFFF; font-weight: 600; }
-        .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
-        .top-header { background-color: var(--card-bg); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .top-header .user-profile { display: flex; align-items: center; gap: 15px; }
-        .top-header .avatar { width: 42px; height: 42px; border-radius: 50%; background-color: var(--primary-burgundy); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .content-area { padding: 35px 40px; display: flex; flex-direction: column; gap: 30px; }
-        .section-title { font-size: 20px; font-weight: 700; color: var(--primary-burgundy); margin-bottom: 15px; }
-        .desktop-split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .content-card { background-color: var(--card-bg); border-radius: var(--border-radius); padding: 25px; box-shadow: var(--shadow-soft); }
-        .chart-placeholder { height: 250px; background-color: #FAFAFA; border: 2px dashed #E2E0E5; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <aside class="sidebar">
-        <div class="brand">AssureX Admin</div>
-        <ul class="nav-menu">
-            <li class="nav-item"><a href="#">Dashboard Overview</a></li>
-            <li class="nav-item"><a href="#">All Claims Queue</a></li>
-            <li class="nav-item"><a href="#">Manual Review Queue</a></li>
-            <li class="nav-item"><a href="#">Warranty Rules Config</a></li>
-            <li class="nav-item active"><a href="#">Analytics & Reports</a></li>
-            <li class="nav-item"><a href="#">Audit Logs</a></li>
-            <li class="nav-item"><a href="#">User Management</a></li>
-        </ul>
-    </aside>
-    <div class="main-wrapper">
-        <header class="top-header">
-            <h2>Data Analysis & Reporting Center</h2>
-            <div class="user-profile">
-                <div>
-                    <div style="font-weight: bold;">Admin User</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Data Analyst</div>
-                </div>
-                <div class="avatar">AD</div>
-            </div>
-        </header>
-        <main class="content-area">
+{% extends "admin_Base.html" %}
+
+
+{% block title %}
+Analytics Reports
+{% endblock %}
+
+
+{% block content %}
             <div class="desktop-split-grid">
                 <div class="content-card">
                     <h3 class="section-title">Claim Outcomes Distribution</h3>
@@ -79,7 +27,4 @@
                     <div class="chart-placeholder">[ Time-series Graph: Weekly Review Volume ]</div>
                 </div>
             </div>
-        </main>
-    </div>
-</body>
-</html>
+  {% endblock %}
