@@ -90,3 +90,15 @@ Record the next task here, including:
 - Tests run
 - Failures and fixes
 - SRS requirements affected
+
+
+### Repository size
+
+A duplicate dataset render was accidentally committed under
+`dataset_generator/` by running the generator without `--root`. The generator's
+default `--root` points at the `dataset_generator` folder itself rather than
+`dataset/`, so the output landed in the wrong place and was committed. The
+duplicate files were removed in a later commit, but the orphaned image blobs
+remain in history and account for most of the 1.1 GB `.git` size. History was
+not rewritten, because the team rule forbids force pushes and the repository is
+shared.
