@@ -10,7 +10,7 @@ Dashboard Overview - AssureX
     <div class="content-card">
         <div class="section-header">
                     <h3 class="section-title">Comprehensive Claims Repository</h3>
- <form method="GET"  action="{{ url_for('all_claims') }}" class="filter-bar">
+ <form method="GET"  action="{{ url_for('claims_queue') }}" class="filter-bar">
 
     <input type="text" name="search" class="filter-input"
          placeholder="Search Claim ID, Product ID, .." value="{{ search }}">

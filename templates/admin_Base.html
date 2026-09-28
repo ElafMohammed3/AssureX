@@ -12,30 +12,30 @@
         <div class="brand">AssureX Admin</div>
         <ul class="nav-menu">
             <li class="nav-item active">
-                <a   href="{{ url_for('dashboard') }}"
+                <a   href="{{ url_for('customer_dashboard') }}"
                     class="
                         nav-item
-                        {% if request.endpoint == 'dashboard' %}
+                        {% if request.endpoint == 'customer_dashboard' %}
                             active
                         {% endif %}
                     ">Dashboard Overview</a>
             </li>
             <li class="nav-item">
-                <a href=" {{ url_for('all_claims') }}" class="nav-item
-                        {% if request.endpoint == 'all_claims' %}
+                <a href=" {{ url_for('claims_queue') }}" class="nav-item
+                        {% if request.endpoint == 'claims_queue' %}
                             active
                         {% endif %}">All Claims Queue</a>
             </li>
-            <li class="nav-item"><a href=" {{ url_for('manual_review') }}" class="nav-item
-                        {% if request.endpoint == 'manual_review' %}
+            <li class="nav-item"><a href=" {{ url_for('manual_review_queue') }}" class="nav-item
+                        {% if request.endpoint == 'manual_review_queue' %}
                             active
                         {% endif %}">Manual Review Queue</a></li>
-            <li class="nav-item"><a href=" {{ url_for('warranty_rules') }}" class="nav-item
-                        {% if request.endpoint == 'warranty_rules' %}
+            <li class="nav-item"><a href=" {{ url_for('warranty_rules_config') }}" class="nav-item
+                        {% if request.endpoint == 'warranty_rules_config' %}
                             active
                         {% endif %}">Warranty Rules Config</a></li>
-            <li class="nav-item"><a href=" {{ url_for('analytics') }}" class="nav-item
-                        {% if request.endpoint == 'analytics' %}
+            <li class="nav-item"><a href=" {{ url_for('analytics_reports') }}" class="nav-item
+                        {% if request.endpoint == 'analytics_reports' %}
                             active
                         {% endif %}">Analytics & Reports</a></li>
             <li class="nav-item"><a href=" {{ url_for('audit_logs') }}" class="nav-item
