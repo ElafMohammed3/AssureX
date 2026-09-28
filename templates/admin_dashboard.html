@@ -1,334 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AssureX Claim Engine - Administrator Dashboard</title>
-    <style>
-        :root {
-            --bg-body: #F4F3F5;
-            --sidebar-bg: #2D080E;
-            --primary-burgundy: #4A0E17;
-            --accent-red: #801828;
-            --card-bg: #FFFFFF;
-            --text-dark: #1F1F1F;
-            --text-muted: #6C757D;
-            --status-valid: #28A745;
-            --status-invalid: #DC3545;
-            --status-review: #FFC107;
-            --border-radius: 18px;
-            --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.05);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-dark);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            color: #FFFFFF;
-            display: flex;
-            flex-direction: column;
-            padding: 30px 20px;
-            flex-shrink: 0;
-        }
-
-        .sidebar .brand {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 40px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #FFFFFF;
-        }
-
-        .sidebar .nav-menu {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .sidebar .nav-item a {
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            padding: 14px 18px;
-            border-radius: 12px;
-            display: block;
-            transition: all 0.3s ease;
-            font-size: 15px;
-        }
-
-        .sidebar .nav-item.active a, .sidebar .nav-item a:hover {
-            background-color: var(--primary-burgundy);
-            color: #FFFFFF;
-            font-weight: 600;
-        }
-
-        .main-wrapper {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow-y: auto;
-        }
-
-        .top-header {
-            background-color: var(--card-bg);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .top-header .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .top-header .avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background-color: var(--primary-burgundy);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .content-area {
-            padding: 35px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .section-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--primary-burgundy);
-        }
-
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-
-        .kpi-card {
-            background-color: var(--card-bg);
-            padding: 22px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-soft);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            border: 1px solid rgba(0, 0, 0, 0.02);
-        }
-
-        .kpi-card .number {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--primary-burgundy);
-            margin-top: 10px;
-        }
-
-        .kpi-card .label {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .kpi-card.highlight {
-            background: linear-gradient(135deg, var(--primary-burgundy), var(--accent-red));
-            color: #FFFFFF;
-        }
-
-        .kpi-card.highlight .number, .kpi-card.highlight .label {
-            color: #FFFFFF;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-input, .filter-select {
-            padding: 10px 16px;
-            border: 1px solid #E2E0E5;
-            border-radius: 25px;
-            background-color: #FFFFFF;
-            font-size: 13px;
-            color: var(--text-dark);
-            outline: none;
-        }
-
-        .filter-input {
-            width: 260px;
-        }
-
-        .btn-export {
-            background-color: var(--primary-burgundy);
-            color: #FFFFFF;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-left: auto;
-        }
-
-        .content-card {
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow-soft);
-        }
-
-        .custom-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 14px;
-        }
-
-        .custom-table th, .custom-table td {
-            padding: 14px 16px;
-            text-align: left;
-            border-bottom: 1px solid #EFEFEF;
-        }
-
-        .custom-table th {
-            color: var(--text-muted);
-            font-weight: 600;
-            background-color: #FAFAFA;
-        }
-
-        .badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .badge-valid { background-color: rgba(40, 167, 69, 0.15); color: var(--status-valid); }
-        .badge-invalid { background-color: rgba(220, 53, 69, 0.15); color: var(--status-invalid); }
-        .badge-review { background-color: rgba(255, 193, 7, 0.15); color: #B78103; }
-
-        .desktop-split-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-
-        .analytics-box {
-            height: 200px;
-            background-color: #FAFAFA;
-            border: 2px dashed #E2E0E5;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-
-{% include "_nav.html" %}
+{% extends "admin_Base.html" %}
 
 
-    <aside class="sidebar">
-        <div class="brand">AssureX Admin</div>
-        <ul class="nav-menu">
-            <li class="nav-item active"><a href="#">Dashboard Overview</a></li>
-            <li class="nav-item"><a href="#">All Claims Queue</a></li>
-            <li class="nav-item"><a href="#">Manual Review Queue</a></li>
-            <li class="nav-item"><a href="#">Warranty Rules Config</a></li>
-            <li class="nav-item"><a href="#">Analytics & Reports</a></li>
-            <li class="nav-item"><a href="#">Audit Logs</a></li>
-            <li class="nav-item"><a href="#">User Management</a></li>
-        </ul>
-    </aside>
+{% block title %}
+Dashboard Overview - AssureX
+{% endblock %}
 
-    <div class="main-wrapper">
-        <header class="top-header">
-            <h2>System Administration Dashboard</h2>
-            <div class="user-profile">
-                <div>
-                    <div style="font-weight: bold;">Admin User</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Role: System Administrator</div>
-                </div>
-                <div class="avatar">AD</div>
-            </div>
-        </header>
 
-        <main class="content-area">
+{% block content %}
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <span class="label">Total Claims Received</span>
-                    <span class="number">1,500</span>
+                    <span class="number">{{ stats.total_claims}}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">Likely Valid Claims</span>
-                    <span class="number">520</span>
+                    <span class="number">{{ stats.valid_claims }}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">Likely Invalid Claims</span>
-                    <span class="number">480</span>
+                    <span class="number"> {{ stats.invalid_claims }}</span>
                 </div>
                 <div class="kpi-card highlight">
                     <span class="label">Manual Review Queue</span>
-                    <span class="number">500</span>
+                    <span class="number"> {{ stats.manual_review }}</span>
                 </div>
             </div>
 
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <span class="label">Duplicate Claim Alerts</span>
-                    <span class="number">34</span>
+                    <span class="number"> {{ stats.duplicate_alerts }}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">AI Model Disagreements</span>
-                    <span class="number">18</span>
+                    <span class="number">{{ stats.model_disagreements }}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">Avg Python Confidence</span>
-                    <span class="number">88.4%</span>
+                    <span class="number">{{ stats.python_confidence }}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">Avg Teachable Machine Conf.</span>
-                    <span class="number">86.1%</span>
+                    <span class="number">{{ stats.tm_confidence }}</span>
                 </div>
             </div>
 
@@ -372,55 +85,117 @@
                     <button class="btn-export">Export Data (CSV/Excel)</button>
                 </div>
 
-                <table class="custom-table">
-                    <thead>
-                        <tr>
-                            <th>Claim ID</th>
-                            <th>Product ID</th>
-                            <th>Python Prediction</th>
-                            <th>Teachable Machine</th>
-                            <th>Conf. Diff</th>
-                            <th>Rule Engine Result</th>
-                            <th>Final Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#CLM-9081</td>
-                            <td>PRD-1029</td>
-                            <td>Valid (92%)</td>
-                            <td>Valid (89%)</td>
-                            <td>3.0%</td>
-                            <td>All Passed</td>
-                            <td><span class="badge badge-valid">Likely Valid</span></td>
-                            <td><a href="#" style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">Review</a></td>
-                        </tr>
-                        <tr>
-                            <td>#CLM-9082</td>
-                            <td>PRD-3301</td>
-                            <td>Manual (54%)</td>
-                            <td>Invalid (70%)</td>
-                            <td>16.0%</td>
-                            <td>Serial Mismatch</td>
-                            <td><span class="badge badge-review">Manual Review</span></td>
-                            <td><a href="#" style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">Review</a></td>
-                        </tr>
-                        <tr>
-                            <td>#CLM-9083</td>
-                            <td>PRD-8820</td>
-                            <td>Invalid (12%)</td>
-                            <td>Invalid (10%)</td>
-                            <td>2.0%</td>
-                            <td>Warranty Expired</td>
-                            <td><span class="badge badge-invalid">Likely Invalid</span></td>
-                            <td><a href="#" style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">Review</a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </main>
+               <section class="dashboard-section">
+
+    <div class="section-header">
+
+        <h2>
+            Recent Claims
+        </h2>
+
+        <a
+            href="{{ url_for('all_claims') }}"
+        >
+            View All
+        </a>
+
     </div>
 
-</body>
-</html>
+
+    <table class="custom-table">
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Claim ID
+                </th>
+
+                <th>
+                    Product
+                </th>
+
+                <th>
+                    Python Prediction
+                </th>
+
+                <th>
+                    TM Prediction
+                </th>
+
+                <th>
+                    Confidence Difference
+                </th>
+
+                <th>
+                    Rule Result
+                </th>
+
+                <th>
+                    Final Status
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for claim in claims %}
+
+            <tr>
+
+                <td>
+                    #{{ claim.claim_id }}
+                </td>
+
+                <td>
+                    {{ claim.product_id }}
+                </td>
+
+                <td>
+                    {{ claim.python_prediction }}
+                </td>
+
+                <td>
+                    {{ claim.teachable_machine_prediction }}
+                </td>
+
+                <td>
+                    {{ claim.confidence_difference }}
+                </td>
+
+                <td>
+                    {{ claim.rule_engine_result }}
+                </td>
+
+                <td>
+                    {{ claim.final_status }}
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+
+                <td
+                    colspan="7"
+                    style="text-align:center;"
+                >
+                    No claims found.
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</section>
+            </div>
+ {% endblock %}
