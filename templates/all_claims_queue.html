@@ -13,7 +13,7 @@ Dashboard Overview - AssureX
  <form method="GET"  action="{{ url_for('claims_queue') }}" class="filter-bar">
 
     <input type="text" name="search" class="filter-input"
-         placeholder="Search Claim ID, Product ID, .." value="{{ search }}">
+         placeholder="Search Claim ID, Product ID, .." value="{{ filters.q }}">
 
     <select name="category" class="filter-select" >
         <option value=""> All Categories</option>

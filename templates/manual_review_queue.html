@@ -14,7 +14,7 @@ Manual Review Queue
                 <form method="GET"  action="{{ url_for('claims_queue') }}" class="filter-bar">
 
     <input type="text" name="search" class="filter-input"
-         placeholder="Search Claim ID, Product ID, .." value="{{ search }}">
+         placeholder="Search Claim ID, Product ID, ..">
 
     <select name="category" class="filter-select" >
         <option value=""> All Categories</option>
@@ -44,25 +44,39 @@ Manual Review Queue
                             <th>Action & Override</th>
                         </tr>
                     </thead>
-                    <tbody>
+                                            <tbody>
+                        {% for e in evaluations %}
                         <tr>
-                            <td>#CLM-9082</td>
-                            <td>Washing Machine FL</td>
-                            <td>Low Confidence & Conflict</td>
-                            <td>16.0% Difference</td>
-                            <td>Serial Number Mismatch</td>
-                            <td><span class="badge badge-review">Pending Review</span></td>
-                            <td><a href="#" class="btn-action">Open Adjudication</a></td>
+                            <td>#{{ e.claim.claim_id }}</td>
+                            <td>{{ e.claim.product.product_name }}</td>
+                            <td>{{ e.warranty_result|replace('_', ' ')|title }}</td>
+                            <td>
+                                {% if e.confidence_difference is not none %}
+                                    {{ '%.1f'|format(e.confidence_difference * 100) }}%
+                                {% else %}
+                                    no image model
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if e.contradictions %}
+                                    {{ e.contradictions|join(', ') }}
+                                {% elif e.missing_documents %}
+                                    Missing: {{ e.missing_documents|join(', ') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td><span class="badge badge-review">{{ e.final_decision }}</span></td>
+                            <td>
+                                <a href="{{ url_for('claim_details', claim_id=e.claim.claim_id) }}"
+                                   class="btn-action">Open Adjudication</a>
+                            </td>
                         </tr>
+                        {% else %}
                         <tr>
-                            <td>#CLM-9104</td>
-                            <td>Inverter Refrigerator</td>
-                            <td>Missing Supporting Evidence</td>
-                            <td>5.2% Difference</td>
-                            <td>Missing Purchase Receipt</td>
-                            <td><span class="badge badge-review">Pending Review</span></td>
-                            <td><a href="#" class="btn-action">Open Adjudication</a></td>
+                            <td colspan="7">No claims are awaiting manual review.</td>
                         </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

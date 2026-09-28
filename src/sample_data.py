@@ -26,7 +26,7 @@ demonstration data can never be mistaken for genuine user submissions.
 """
 
 from __future__ import annotations
-
+from datetime import date, timedelta
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -42,6 +42,52 @@ import pandas as pd  # noqa: E402
 from claim_service import derive_numeric_facts, persist_submission  # noqa: E402
 from database import Claim, User, db  # noqa: E402
 
+from claim_service import derive_numeric_facts, persist_submission  # noqa: E402
+from database import Claim, User, db  # noqa: E402
+
+_TODAY = date.today()
+_MAX_EXPIRY = _TODAY + timedelta(days=420)
+_SPARK_IN_FUTURE = _TODAY + timedelta(days=12)
+_SPARK_IN_PAST = _TODAY - timedelta(days=75)
+
+
+def _scenario_offset(row: Mapping[str, Any]) -> int:
+    """Days to shift this record forward so its warranty lands usefully."""
+    scenario = str(row.get("scenario", ""))
+
+    if scenario == "expired_warranty":
+        target = _SPARK_IN_PAST
+    elif scenario == "near_expiry_boundary":
+        target = _SPARK_IN_FUTURE
+    else:
+        target = _MAX_EXPIRY
+
+    try:
+        expiry = date.fromisoformat(str(row.get("warranty_expiry_date"))[:10])
+    except (TypeError, ValueError):
+        return 0
+
+    return (target - expiry).days
+
+
+def _shift(value: Any, delta: timedelta) -> str:
+    if not value:
+        return _text(value)
+    try:
+        parsed = date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return _text(value)
+    return (parsed + delta).isoformat()
+
+
+def _clamp_today(value: str) -> str:
+    if not value:
+        return value
+    try:
+        parsed = date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return value
+    return min(parsed, _TODAY).isoformat()
 # SRS deliverable 8 wording -> the dataset scenario that demonstrates it.
 SRS_DEMO_CASES: dict[str, str] = {
     "one valid claim": "standard_covered",
@@ -100,6 +146,7 @@ FIELD_MAP = {
 
 def row_to_form(row: Mapping[str, Any]) -> dict[str, Any]:
     """Convert one dataset record into the shape the claim form submits."""
+    shift = timedelta(days=_scenario_offset(row))
     form: dict[str, Any] = {
         "claim_id": f"SAMPLE-{row['claim_id']}",
         "product_category": row.get("product_category", ""),

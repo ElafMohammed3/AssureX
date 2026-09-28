@@ -32,6 +32,7 @@
         }
 
         body {
+            flex-wrap: wrap;
             background-color: var(--light-pink-bg);
             color: var(--text-dark);
             min-height: 100vh;
@@ -246,25 +247,38 @@
             </div>
             <a href="{{ url_for('create_claim') }}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Create New Claim</a>
         </div>
-
+                    {% if evaluations %}
+            {% set ev = evaluations[-1] %}
+            <div class="content-card" style="border-left: 5px solid var(--primary-burgundy); margin-bottom: 20px;">
+                <div class="section-header">
+                    <h3 class="section-title">Final Decision</h3>
+                </div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: var(--primary-burgundy);">
+                    {{ ev.final_decision or 'Not Recorded' }}
+                </div>
+                <div style="margin-top: 6px; color: var(--text-muted);">
+                    Claim status: {{ claim.status }} &middot; Warranty rule: {{ ev.warranty_result or 'n/a' }} &middot; Evaluation: {{ ev.evaluation_id }}
+                </div>
+            </div>
+            {% endif %}
         <div class="details-grid">
             <!-- Left Column: Customer & Claim Info -->
             <div>
                 <section class="card">
                     <div class="card-title"><i class="fa-regular fa-user"></i> Claimant Information</div>
-                    <div class="info-row"><span class="info-label">Claim ID:</span><span class="info-value" id="displayClaimId">Not Provided</span></div>
-                    <div class="info-row"><span class="info-label">Full Name:</span><span class="info-value" id="displayName">Not Provided</span></div>
-                    <div class="info-row"><span class="info-label">Email:</span><span class="info-value" id="displayEmail">Not Provided</span></div>
-                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value" id="displayPhone">Not Provided</span></div>
+                    <div class="info-row"><span class="info-label">Claim ID:</span><span class="info-value" id="displayClaimId">{{ claim.claim_id }}</span></div>
+                    <div class="info-row"><span class="info-label">Full Name:</span><span class="info-value" id="displayName">{{ claim.user.full_name }}</span></div>
+                    <div class="info-row"><span class="info-label">Email:</span><span class="info-value" id="displayEmail">{{ claim.user.email }}</span></div>
+                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value" id="displayPhone">{{ claim.user.phone or 'Not provided' }}</span></div>
                 </section>
 
                 <section class="card">
                     <div class="card-title"><i class="fa-solid fa-box"></i> Product & Incident Details</div>
-                    <div class="info-row"><span class="info-label">Product Name:</span><span class="info-value" id="displayProduct">Not Selected</span></div>
-                    <div class="info-row"><span class="info-label">Warranty ID:</span><span class="info-value" id="displayWarrantyId">N/A</span></div>
-                    <div class="info-row"><span class="info-label">Fault Type:</span><span class="info-value" id="displayFaultType">Not Selected</span></div>
-                    <div class="info-row"><span class="info-label">Incident Date:</span><span class="info-value" id="displayDate">N/A</span></div>
-                    <div class="info-row"><span class="info-label">Description:</span><span class="info-value" id="displayDesc">N/A</span></div>
+                                        <div class="info-row"><span class="info-label">Product Name:</span><span class="info-value" id="displayProduct">{{ claim.product.product_name }} ({{ claim.product.brand }})</span></div>
+                    <div class="info-row"><span class="info-label">Warranty ID:</span><span class="info-value" id="displayWarrantyId">{{ claim.warranty.warranty_id }} &middot; {{ claim.warranty.status }}</span></div>
+                    <div class="info-row"><span class="info-label">Fault Type:</span><span class="info-value" id="displayFaultType">{{ claim.damage_type }}</span></div>
+                    <div class="info-row"><span class="info-label">Incident Date:</span><span class="info-value" id="displayDate">{{ claim.fault_occurrence_date.strftime('%Y-%m-%d') }}</span></div>
+                    <div class="info-row"><span class="info-label">Description:</span><span class="info-value" id="displayDesc">{{ claim.fault_description }}</span></div>
                 </section>
             </div>
 
@@ -281,23 +295,39 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><strong>Teachable Machine (Google)</strong></td>
-                                <td id="tmPred"><span class="badge badge-secondary">No Scan</span></td>
-                                <td id="tmConf">N/A</td>
-                            </tr>
+                                                        {% if evaluations %}
+                            {% set ev = evaluations[-1] %}
                             <tr>
                                 <td><strong>Python Model (Custom Trained)</strong></td>
-                                <td><span class="badge badge-secondary">Under Development</span></td>
-                                <td style="font-size: 0.8rem; color: var(--text-muted);">N/A</td>
+                                <td><span class="badge badge-review">{{ ev.python_prediction or 'Not Evaluated' }}</span></td>
+                                <td>
+                                    {% if ev.python_prediction == 'Valid Claim' %}{{ '%.1f'|format((ev.python_valid_confidence or 0) * 100) }}%
+                                    {% elif ev.python_prediction == 'Invalid Claim' %}{{ '%.1f'|format((ev.python_invalid_confidence or 0) * 100) }}%
+                                    {% elif ev.python_prediction == 'Manual Review' %}{{ '%.1f'|format((ev.python_manual_review_confidence or 0) * 100) }}%
+                                    {% else %}N/A{% endif %}
+                                </td>
                             </tr>
+                            <tr>
+                                <td><strong>Teachable Machine (Google)</strong></td>
+                                <td><span class="badge badge-review">{{ ev.teachable_prediction or 'Not Evaluated' }}</span></td>
+                                <td>
+                                    {% if ev.teachable_prediction == 'Valid Claim' %}{{ '%.1f'|format((ev.teachable_valid_confidence or 0) * 100) }}%
+                                    {% elif ev.teachable_prediction == 'Invalid Claim' %}{{ '%.1f'|format((ev.teachable_invalid_confidence or 0) * 100) }}%
+                                    {% elif ev.teachable_prediction == 'Manual Review' %}{{ '%.1f'|format((ev.teachable_manual_review_confidence or 0) * 100) }}%
+                                    {% else %}N/A{% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3">No evaluation has been recorded for this claim.</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
 
                     <div class="xai-box">
                         <i class="fa-solid fa-brain" style="color: var(--primary-burgundy);"></i> <strong>Explainable AI (XAI) Insight:</strong>
-                        <p id="xaiExplanation" style="margin-top: 5px; color: var(--text-muted);">No scan performed yet. Submit a warranty card image from the Create Claim page to view the automated evaluation.</p>
-                    </div>
+                        <p id="xaiExplanation" style="margin-top: 5px; color: var(--text-muted);">{% if evaluations %}{{ evaluations[-1].explanation or 'No explanation recorded.' }}{% else %}No evaluation has been recorded for this claim.{% endif %}</p>                    </div>
                 </section>
 
                 <section class="card">
@@ -315,65 +345,5 @@
 
     <footer>
         &copy; 2026 AssureX Automated Warranty Claim System. All rights reserved.
-    </footer>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Read data saved from Page 1
-            const claimId = localStorage.getItem("claim_id");
-            const fullName = localStorage.getItem("claim_fullName");
-            const email = localStorage.getItem("claim_email");
-            const phone = localStorage.getItem("claim_phone");
-            const product = localStorage.getItem("claim_product");
-            const warrantyId = localStorage.getItem("claim_warrantyId");
-            const claimType = localStorage.getItem("claim_type");
-            const incidentDate = localStorage.getItem("claim_incidentDate");
-            const description = localStorage.getItem("claim_description");
-            
-            const tmClass = localStorage.getItem("claim_tmClass");
-            const tmConfidence = localStorage.getItem("claim_tmConfidence");
-            const cardImgData = localStorage.getItem("claim_card_image");
-
-            // Fill Customer & Product details ONLY if user submitted them
-            if (claimId) document.getElementById("displayClaimId").innerText = claimId;
-            if (fullName) document.getElementById("displayName").innerText = fullName;
-            if (email) document.getElementById("displayEmail").innerText = email;
-            if (phone) document.getElementById("displayPhone").innerText = phone;
-            if (product) document.getElementById("displayProduct").innerText = product;
-            if (warrantyId) document.getElementById("displayWarrantyId").innerText = warrantyId;
-            if (claimType) document.getElementById("displayFaultType").innerText = claimType;
-            if (incidentDate) document.getElementById("displayDate").innerText = incidentDate;
-            if (description) document.getElementById("displayDesc").innerText = description;
-
-            // Render Uploaded Image if available
-            if (cardImgData) {
-                document.getElementById("imageHolder").innerHTML = `<img src="${cardImgData}" alt="Uploaded Warranty Card">`;
-            }
-
-            // Real Teachable Machine (Google Model) Result from Page 1
-            const tmPredTd = document.getElementById("tmPred");
-            const tmConfTd = document.getElementById("tmConf");
-            const xaiBox = document.getElementById("xaiExplanation");
-
-            if (tmClass && tmConfidence) {
-                const confVal = parseFloat(tmConfidence).toFixed(1);
-                tmConfTd.innerText = confVal + "%";
-
-                if (tmClass.toLowerCase() === "valid") {
-                    tmPredTd.innerHTML = `<span class="badge badge-success">Valid</span>`;
-                    xaiBox.innerHTML = `<strong>Status: Valid Document</strong><br>` +
-                        `Google Teachable Machine model successfully identified the warranty card image as authentic with <strong>${confVal}%</strong> confidence score.`;
-                } else if (tmClass.toLowerCase() === "invalid") {
-                    tmPredTd.innerHTML = `<span class="badge badge-danger">Invalid</span>`;
-                    xaiBox.innerHTML = `<strong>Status: Rejected Document</strong><br>` +
-                        `Google Teachable Machine model classified the document as invalid or tampered with (Confidence: <strong>${confVal}%</strong>). Manual audit required.`;
-                } else {
-                    tmPredTd.innerHTML = `<span class="badge badge-warning">Uncertain</span>`;
-                    xaiBox.innerHTML = `<strong>Status: Manual Review Needed</strong><br>` +
-                        `Model confidence score (${confVal}%) is below the automated approval threshold.`;
-                }
-            }
-        });
-    </script>
 </body>
 </html>

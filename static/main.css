@@ -65,7 +65,7 @@
             font-size: 15px;
         }
 
-        .sidebar .nav-item.active a, .sidebar .nav-item a:hover {
+        .sidebar .nav-item.active a, .sidebar .nav-item a.active, .sidebar .nav-item a:hover {
             background-color: var(--primary-burgundy);
             color: #FFFFFF;
             font-weight: 600;

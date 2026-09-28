@@ -14,7 +14,7 @@ Audit logd
                 <form method="GET"  action="{{ url_for('claims_queue') }}" class="filter-bar">
 
     <input type="text" name="search" class="filter-input"
-         placeholder="Search Claim ID, Product ID, .." value="{{ search }}">
+         placeholder="Search Claim ID, Product ID, ..">
 
     <select name="category" class="filter-select" >
         <option value=""> All Categories</option>
@@ -40,34 +40,27 @@ Audit logd
                             <th>User ID / Actor</th>
                             <th>Action Performed</th>
                             <th>Target Entity</th>
-                            <th>IP Address</th>
                         </tr>
                     </thead>
-                    <tbody>
+                                        <tbody>
+                        {% for a in actions %}
                         <tr>
-                            <td>#LOG-5011</td>
-                            <td>2026-09-26 18:30:12</td>
-                            <td>USR-8802 (John Doe)</td>
-                            <td>Product Registration</td>
-                            <td>Product #PRD-401</td>
-                            <td>192.168.1.45</td>
+                            <td>{{ a.action_id }}</td>
+                            <td>{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ a.reviewer.user_id }}</td>
+                            <td><span class="badge badge-review">{{ a.action }}</span></td>
+                            <td>
+                                <a href="{{ url_for('claim_details', claim_id=a.claim.claim_id) }}"
+                                   style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">
+                                    #{{ a.claim.claim_id }}
+                                </a>
+                            </td>
                         </tr>
+                        {% else %}
                         <tr>
-                            <td>#LOG-5012</td>
-                            <td>2026-09-26 19:10:45</td>
-                            <td>SYS-ENGINE (AI Model V1)</td>
-                            <td>Model Prediction Execution</td>
-                            <td>Claim #CLM-9082</td>
-                            <td>Internal Server</td>
+                            <td colspan="5">No reviewer actions have been recorded yet.</td>
                         </tr>
-                        <tr>
-                            <td>#LOG-5013</td>
-                            <td>2026-09-26 20:05:00</td>
-                            <td>AD-01 (Reviewer)</td>
-                            <td>Manual Review Override</td>
-                            <td>Claim #CLM-9082</td>
-                            <td>192.168.1.10</td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

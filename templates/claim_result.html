@@ -53,40 +53,39 @@
   </div>
 
   <div class="col-lg-6">
-    {% set rules = result.rule_result %}
     <div class="card shadow-sm h-100">
-      <div class="card-header {% if rules.outcome == 'hard_fail' %}bg-danger{% elif rules.outcome == 'manual_review' %}bg-warning{% else %}bg-success{% endif %} text-white">
-        Warranty rule validation &middot; {{ rules.outcome|replace('_', ' ')|upper }}
+      <div class="card-header {% if result.rule_result.outcome == 'hard_fail' %}bg-danger{% elif result.rule_result.outcome == 'manual_review' %}bg-warning{% else %}bg-success{% endif %} text-white">
+        Warranty rule validation &middot; {{ result.rule_result.outcome|replace('_', ' ')|upper }}
       </div>
       <div class="card-body">
         <dl class="row small">
-          <dt class="col-sm-5">Policy</dt><dd class="col-sm-7">{{ rules.policy_source }}</dd>
-          <dt class="col-sm-5">Warranty status</dt><dd class="col-sm-7">{{ rules.warranty_status }}</dd>
-          <dt class="col-sm-5">Days remaining</dt><dd class="col-sm-7">{{ rules.warranty_remaining_days }}</dd>
-          <dt class="col-sm-5">Reported after fault</dt><dd class="col-sm-7">{{ rules.reporting_days }} day(s)</dd>
-          <dt class="col-sm-5">Within reporting period</dt><dd class="col-sm-7">{{ rules.claim_reporting_within_period }}</dd>
-          <dt class="col-sm-5">Serial-number status</dt><dd class="col-sm-7">{{ rules.serial_number_status }}</dd>
-          <dt class="col-sm-5">Replacement eligible</dt><dd class="col-sm-7">{{ rules.replacement_eligible }}</dd>
+          <dt class="col-sm-5">Policy</dt><dd class="col-sm-7">{{ result.rule_result.policy_source }}</dd>
+          <dt class="col-sm-5">Warranty status</dt><dd class="col-sm-7">{{ result.rule_result.warranty_status }}</dd>
+          <dt class="col-sm-5">Days remaining</dt><dd class="col-sm-7">{{ result.rule_result.warranty_remaining_days }}</dd>
+          <dt class="col-sm-5">Reported after fault</dt><dd class="col-sm-7">{{ result.rule_result.reporting_days }} day(s)</dd>
+          <dt class="col-sm-5">Within reporting period</dt><dd class="col-sm-7">{{ result.rule_result.claim_reporting_within_period }}</dd>
+          <dt class="col-sm-5">Serial-number status</dt><dd class="col-sm-7">{{ result.rule_result.serial_number_status }}</dd>
+          <dt class="col-sm-5">Replacement eligible</dt><dd class="col-sm-7">{{ result.rule_result.replacement_eligible }}</dd>
         </dl>
 
-        {% if rules.missing_documents %}
+        {% if result.rule_result.missing_documents %}
           <p class="mb-1 fw-semibold">Missing documents</p>
           <ul class="small">
-            {% for doc in rules.missing_documents %}<li>{{ doc }}</li>{% endfor %}
+            {% for doc in result.rule_result.missing_documents %}<li>{{ doc }}</li>{% endfor %}
           </ul>
         {% endif %}
 
-        {% if rules.contradictions %}
+        {% if result.rule_result.contradictions %}
           <p class="mb-1 fw-semibold">Contradictions</p>
           <ul class="small">
-            {% for issue in rules.contradictions %}<li>{{ issue }}</li>{% endfor %}
+            {% for issue in result.rule_result.contradictions %}<li>{{ issue }}</li>{% endfor %}
           </ul>
         {% endif %}
 
-        {% if rules.duplicate_indicators %}
+        {% if result.rule_result.duplicate_indicators %}
           <p class="mb-1 fw-semibold">Duplicate indicators</p>
           <ul class="small">
-            {% for issue in rules.duplicate_indicators %}<li>{{ issue }}</li>{% endfor %}
+            {% for issue in result.rule_result.duplicate_indicators %}<li>{{ issue }}</li>{% endfor %}
           </ul>
         {% endif %}
       </div>
@@ -99,10 +98,10 @@
   <div class="card-header">Rule-by-rule explanation (SRS xxxv)</div>
   <div class="card-body">
     {% for group, rows, css in [
-        ('Hard failures', rules.hard_fail, 'danger'),
-        ('Warnings', rules.warning, 'warning'),
-        ('Manual review', rules.manual_review, 'info'),
-        ('Passed', rules.passed, 'success')] %}
+        ('Hard failures', result.rule_result.hard_fail, 'danger'),
+        ('Warnings', result.rule_result.warning, 'warning'),
+        ('Manual review', result.rule_result.manual_review, 'info'),
+        ('Passed', result.rule_result.passed, 'success')] %}
       {% if rows %}
         <h2 class="h6 text-uppercase text-muted mt-3">{{ group }}</h2>
         <table class="table table-sm table-bordered">

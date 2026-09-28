@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import date,datetime
 from pathlib import Path
 
 from flask import (
@@ -409,11 +409,19 @@ def customer_dashboard():
         products=products,
         warranties=warranties,
         claims=claims,
-        stats={
+                stats={
             "products": len(products),
             "active_warranties": sum(1 for w in warranties if w.status == "Active"),
             "claims": len(claims),
-            "pending": sum(1 for c in claims if c.status in {"Submitted", "Under Evaluation"}),
+            "pending": sum(
+                1 for c in claims if c.status in {"Submitted", "Under Evaluation"}
+            ),
+            "expiring_soon": sum(
+                1
+                for w in warranties
+                if w.status == "Active"
+                and 0 <= (w.expiry_date - date.today()).days <= 30
+            ),
         },
     )
 
@@ -643,7 +651,19 @@ def warranty_rules_config():
     from rule_engine import load_policies
 
     return render_template("warranty_rules_config.html", policies=load_policies(POLICY_DIR))
+@app.route("/model-report")
+@role_required(*REVIEW_ROLES)
+def model_report():
+    """Serve the model report from the training artifact, so the page cannot drift from it."""
+    import json
 
+    metrics_path = ARTIFACT_DIR / "metrics.json"
+    if not metrics_path.is_file():
+        flash("No trained model metrics found. Run: py -3 src/train_model.py", "warning")
+        return render_template("model_report.html", metrics={})
+
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    return render_template("model_report.html", metrics=metrics)
 
 @app.route("/health")
 def health():
@@ -677,4 +697,4 @@ if __name__ == "__main__":
     bootstrap()
     port = int(os.getenv("PORT", "5000"))
     print(f"AssureX Claim Engine running on http://127.0.0.1:{port}")
-    app.run(host="127.0.0.1", port=port, debug=False)
+    app.run(host="127.0.0.1", port=port, debug=False , use_reloader=True)

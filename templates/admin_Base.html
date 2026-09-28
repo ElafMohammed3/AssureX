@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title%}AssureX {% endblock %}</title>
-   <link rel="stylesheet" href="..\static\main.css">
-</head>
+   <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}"></head>
 <body>
 
     <aside class="sidebar">
         <div class="brand">AssureX Admin</div>
         <ul class="nav-menu">
-            <li class="nav-item active">
-                <a   href="{{ url_for('customer_dashboard') }}"
+            <li class="nav-item">
+                <a   href="{{ url_for('admin_dashboard') }}"
                     class="
                         nav-item
-                        {% if request.endpoint == 'customer_dashboard' %}
+                        {% if request.endpoint == 'admin_dashboard' %}
                             active
                         {% endif %}
                     ">Dashboard Overview</a>
@@ -38,6 +37,10 @@
                         {% if request.endpoint == 'analytics_reports' %}
                             active
                         {% endif %}">Analytics & Reports</a></li>
+            <li class="nav-item"><a href=" {{ url_for('model_report') }}" class="nav-item
+                        {% if request.endpoint == 'model_report' %}
+                            active
+                        {% endif %}">Model Evaluation</a></li>           
             <li class="nav-item"><a href=" {{ url_for('audit_logs') }}" class="nav-item
                         {% if request.endpoint == 'audit_logs' %}
                             active
@@ -54,11 +57,11 @@
             <h2>System Administration Dashboard</h2>
             <div class="user-profile">
                 <div>
-                    <div style="font-weight: bold;">Admin User</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Role: System Administrator</div>
+                                       <div style="font-weight: bold;">{{ current_user.full_name }}</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Role: {{ current_user.role }}</div>
                 </div>
-                <div class="avatar">AD</div>
-            </div>
+                    <div class="avatar">{{ current_user.full_name[:1]|upper }}</div>
+                    <a href="{{ url_for('logout') }}" style="color: var(--text-muted); font-size: 13px; text-decoration: none;">Sign out</a>            </div>
         </header>
 
         <main class="content-area">

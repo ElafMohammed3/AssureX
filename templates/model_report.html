@@ -1,0 +1,113 @@
+{% extends "admin_Base.html" %}
+
+{% block title %}Model Evaluation Report{% endblock %}
+
+{% block content %}
+            {% if not metrics %}
+            <div class="content-card">
+                <p>No trained model metrics are available.</p>
+            </div>
+            {% else %}
+
+            <div class="content-card">
+                <div class="section-header">
+                    <h3 class="section-title">Trained Model</h3>
+                </div>
+                <div class="info-row"><span class="info-label">Model version:</span><span class="info-value">{{ metrics.model_version }}</span></div>
+                <div class="info-row"><span class="info-label">Selected model:</span><span class="info-value">{{ metrics.selected_model | replace('_', ' ') | title }}</span></div>
+                <div class="info-row"><span class="info-label">Selection rule:</span><span class="info-value">{{ metrics.selection_rule }}</span></div>
+                <div class="info-row"><span class="info-label">Training script:</span><span class="info-value">{{ metrics.generated_by }}</span></div>
+                <div class="info-row"><span class="info-label">Random state:</span><span class="info-value">{{ metrics.random_state }}</span></div>
+                <div class="info-row"><span class="info-label">Train rows:</span><span class="info-value">{{ metrics.dataset.train_rows }}</span></div>
+                <div class="info-row"><span class="info-label">Validation rows:</span><span class="info-value">{{ metrics.dataset.validation_rows }}</span></div>
+                <div class="info-row"><span class="info-label">Test rows (held out):</span><span class="info-value">{{ metrics.dataset.test_rows }}</span></div>
+                <div class="info-row"><span class="info-label">Fields fed to the model:</span><span class="info-value">{{ metrics.dataset.model_features }}</span></div>
+                <div class="info-row"><span class="info-label">Features after encoding:</span><span class="info-value">{{ metrics.dataset.transformed_features }}</span></div>
+            </div>
+
+            <div class="content-card">
+                <div class="section-header">
+                    <h3 class="section-title">Candidate Models Scored on the Validation Split</h3>
+                </div>
+                <table class="custom-table">
+                    <thead>
+                        <tr><th>Candidate</th><th>Accuracy</th><th>Macro F1</th><th>Weighted F1</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for name, scores in metrics.validation_results.items() %}
+                        <tr>
+                            <td>{{ name | replace('_', ' ') | title }}</td>
+                            <td>{{ '%.2f' | format(scores.accuracy * 100) }}%</td>
+                            <td>{{ '%.2f' | format(scores.f1_macro * 100) }}%</td>
+                            <td>{{ '%.2f' | format(scores.f1_weighted * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="content-card">
+                <div class="section-header">
+                    <h3 class="section-title">Held-out Test Set ({{ metrics.dataset.test_rows }} claims never used in training)</h3>
+                </div>
+                <div class="info-row"><span class="info-label">Accuracy:</span><span class="info-value"><strong>{{ '%.2f' | format(metrics.test_results.accuracy * 100) }}%</strong></span></div>
+                <div class="info-row"><span class="info-label">Macro F1:</span><span class="info-value"><strong>{{ '%.2f' | format(metrics.test_results.f1_macro * 100) }}%</strong></span></div>
+                <div class="info-row"><span class="info-label">Weighted F1:</span><span class="info-value"><strong>{{ '%.2f' | format(metrics.test_results.f1_weighted * 100) }}%</strong></span></div>
+                <div class="info-row"><span class="info-label">5-fold cross-validation macro F1:</span><span class="info-value">{{ '%.2f' | format(metrics.cross_validation_f1_macro.mean * 100) }}% &plusmn; {{ '%.2f' | format(metrics.cross_validation_f1_macro.std * 100) }}%</span></div>
+                <div class="info-row"><span class="info-label">Fold scores:</span><span class="info-value">{% for f in metrics.cross_validation_f1_macro.folds %}{{ '%.2f' | format(f * 100) }}%{% if not loop.last %} &middot; {% endif %}{% endfor %}</span></div>
+                <div class="info-row"><span class="info-label">Spot-check sample:</span><span class="info-value">{{ metrics.sample_predictions.correct }} of {{ metrics.sample_predictions.rows }} correct</span></div>
+            </div>
+
+            <div class="content-card">
+                <div class="section-header">
+                    <h3 class="section-title">Per-Class Performance</h3>
+                </div>
+                <table class="custom-table">
+                    <thead>
+                        <tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for name, scores in metrics.test_per_class.items() %}
+                        {% if name not in ['accuracy', 'macro avg', 'weighted avg'] %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td>{{ '%.3f' | format(scores.precision) }}</td>
+                            <td>{{ '%.3f' | format(scores.recall) }}</td>
+                            <td>{{ '%.3f' | format(scores['f1-score']) }}</td>
+                            <td>{{ scores.support | int }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <img src="{{ url_for('static', filename='img/confusion_matrix.png') }}"
+                     alt="Confusion matrix on the held-out test set"
+                     style="max-width: 100%; margin-top: 18px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px;">
+            </div>
+
+            <div class="content-card">
+                <div class="section-header">
+                    <h3 class="section-title">Feature Importance</h3>
+                </div>
+                <table class="custom-table">
+                    <thead>
+                        <tr><th>Rank</th><th>Feature</th><th>Importance</th><th>Cumulative</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in metrics.feature_importance.top_15 %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ row.feature }}</td>
+                            <td>{{ '%.4f' | format(row.importance) }}</td>
+                            <td>{{ '%.4f' | format(row.cumulative_importance) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <img src="{{ url_for('static', filename='img/feature_importance.png') }}"
+                     alt="Feature importance for the selected model"
+                     style="max-width: 100%; margin-top: 18px; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px;">
+            </div>
+
+            {% endif %}
+{% endblock %}

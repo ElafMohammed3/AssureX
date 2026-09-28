@@ -8,7 +8,6 @@
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Teachable Machine Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 
     <style>
         :root {
@@ -33,6 +32,7 @@
         }
 
         body {
+            flex-wrap: wrap;
             background-color: var(--light-pink-bg);
             color: var(--text-dark);
             min-height: 100vh;
@@ -266,22 +266,22 @@
             <p style="color: var(--text-muted); font-size: 0.9rem;">Fill out claimant details and upload warranty proof for AI verification.</p>
         </div>
 
-        <form id="claimForm">
+        <form id="claimForm" method="post" action="{{ url_for('create_claim') }}" enctype="multipart/form-data">
             <!-- 1. Claimant Details -->
             <section class="card">
                 <div class="card-title"><i class="fa-regular fa-user"></i> 1. Claimant Information</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="fullName">Full Name *</label>
-                        <input type="text" id="fullName" placeholder="e.g. Enter Your Name" required>
+                        <input type="text" id="fullName" name="full_name" placeholder="e.g. Enter Your Name" required>
                     </div>
                     <div class="form-group">
                         <label for="email">Email Address *</label>
-                        <input type="email" id="email" placeholder="name@example.com" required>
+                        <input type="email" id="email" name="email" placeholder="name@example.com" required>
                     </div>
                     <div class="form-group full-width">
                         <label for="phone">Phone Number *</label>
-                        <input type="tel" id="phone" placeholder="+967 7X XXX XXXX" required>
+                        <input type="tel" id="phone" name="phone" placeholder="+967 7X XXX XXXX" required>
                     </div>
                 </div>
             </section>
@@ -290,17 +290,26 @@
             <section class="card">
                 <div class="card-title"><i class="fa-solid fa-box"></i> 2. Product & Fault Details</div>
                 <div class="form-grid">
+                                       <div class="form-group">
+                        <label for="productCategory">Product Category *</label>
+                        <select id="productCategory" name="product_category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="Laptop">Laptop</option>
+                            <option value="Smartphone">Smartphone</option>
+                            <option value="Television">Television</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="product">Product Name *</label>
-                        <input type="text" id="product" placeholder="e.g. LG Washer / Samsung TV" required>
+                        <input type="text" id="product" name="product_name" placeholder="e.g. LG Washer / Samsung TV" required>
                     </div>
                     <div class="form-group">
                         <label for="warrantyId">Warranty Card ID</label>
-                        <input type="text" id="warrantyId" placeholder="e.g. W-98765">
+                        <input type="text" id="warrantyId" name="warranty_id" placeholder="e.g. W-98765">
                     </div>
                     <div class="form-group">
                         <label for="claimType">Fault Type *</label>
-                        <select id="claimType" required>
+                        <select id="claimType" name="damage_type" required>
                             <option value="">-- Select Fault Type --</option>
                             <option value="Electrical Failure">Electrical Failure</option>
                             <option value="Mechanical Fault">Mechanical Fault</option>
@@ -310,11 +319,11 @@
                     </div>
                     <div class="form-group">
                         <label for="incidentDate">Incident Date *</label>
-                        <input type="date" id="incidentDate" required>
+                        <input type="date" id="incidentDate" name="fault_date" required>
                     </div>
                     <div class="form-group full-width">
                         <label for="description">Detailed Description</label>
-                        <textarea id="description" rows="3" placeholder="Describe the problem in detail..."></textarea>
+                        <textarea id="description" name="fault_description" rows="3" placeholder="Describe the problem in detail..."></textarea>
                     </div>
                 </div>
             </section>
@@ -329,26 +338,12 @@
                     <div id="fileUploadText" style="font-weight: 600; font-size: 0.9rem;">
                         Click or drag file to this area to upload
                     </div>
-                    <input type="file" id="cardImageInput" accept="image/*" style="display: none;" onchange="handleImageScan(this)">
+                    <input type="file" id="cardImageInput" name="card_image" accept="image/*" style="display: none;" >
+                    <input type="file" id="cardImageInput" name="card_image" accept="image/*" style="display: none;">
                 </div>
 
                 <!-- AI Real-Time Scan Box -->
-                <div class="scan-result-card" id="scanBox">
-                    <div style="font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Real-time Scan Result
-                    </div>
-                    <div id="statusBadgeText" style="margin-top: 6px; font-weight: 700; color: #856404;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Analyzing Document...
-                    </div>
-                    
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="progressFill"></div>
-                    </div>
-
-                    <div style="font-size: 0.85rem; color: var(--text-dark);" id="predictionText">
-                        Predicted Class: <strong>-</strong> | Confidence Score: <strong>-</strong>
-                    </div>
-                </div>
+                
             </section>
 
             <!-- Action Buttons -->
@@ -363,78 +358,6 @@
         &copy; 2026 AssureX Automated Warranty Claim System. All rights reserved.
     </footer>
 
-    <script>
-        // Variables to store Teachable Machine Results
-        let scannedClass = "";
-        let scannedConfidence = "";
-        let imageBase64 = "";
-
-        // Simulated/Real Image Upload Handler
-        function handleImageScan(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                document.getElementById('fileUploadText').innerHTML = `Selected: <strong>${file.name}</strong>`;
-
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    imageBase64 = e.target.result;
-                    
-                    // Show Scan Box
-                    const scanBox = document.getElementById('scanBox');
-                    scanBox.style.display = 'block';
-
-                    // Simulate AI Model Scanning (or place actual Teachable Machine predict call here)
-                    // Display result matching your test (CLASS 3 | 100.0%)
-                    scannedClass = "CLASS 3";
-                    scannedConfidence = "100.0";
-
-                    document.getElementById('progressFill').style.width = '100%';
-                    document.getElementById('progressFill').style.backgroundColor = '#ffc107'; // Warning color for Manual Review
-                    document.getElementById('statusBadgeText').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Requires Manual Review`;
-                    document.getElementById('predictionText').innerHTML = `Predicted Class: <strong>${scannedClass}</strong> | Confidence Score: <strong>${scannedConfidence}%</strong>`;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Handle Form Submission & Prevent Refresh
-        const claimForm = document.getElementById('claimForm');
-        claimForm.addEventListener('submit', function (e) {
-            // IMPORTANT: Prevent default form submit page reload!
-            e.preventDefault();
-
-            // 1. Generate unique Claim ID
-            const generatedClaimId = "CLM-" + Math.floor(1000 + Math.random() * 9000);
-
-            // 2. Collect field values
-            const fullName = document.getElementById("fullName").value;
-            const email = document.getElementById("email").value;
-            const phone = document.getElementById("phone").value;
-            const product = document.getElementById("product").value;
-            const warrantyId = document.getElementById("warrantyId").value;
-            const claimType = document.getElementById("claimType").value;
-            const incidentDate = document.getElementById("incidentDate").value;
-            const description = document.getElementById("description").value;
-
-            // 3. Store into localStorage
-            localStorage.setItem("claim_id", generatedClaimId);
-            localStorage.setItem("claim_fullName", fullName);
-            localStorage.setItem("claim_email", email);
-            localStorage.setItem("claim_phone", phone);
-            localStorage.setItem("claim_product", product);
-            localStorage.setItem("claim_warrantyId", warrantyId);
-            localStorage.setItem("claim_type", claimType);
-            localStorage.setItem("claim_incidentDate", incidentDate);
-            localStorage.setItem("claim_description", description);
-
-            // Store AI Scan results
-            if (scannedClass) localStorage.setItem("claim_tmClass", scannedClass);
-            if (scannedConfidence) localStorage.setItem("claim_tmConfidence", scannedConfidence);
-            if (imageBase64) localStorage.setItem("claim_card_image", imageBase64);
-
-            // 4. Redirect seamlessly to Page 2
-            window.location.href = "claim-details.html";
-        });
-    </script>
+    
 </body>
 </html>

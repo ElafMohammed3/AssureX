@@ -16,7 +16,7 @@ My Products
                     <form method="GET"  action="{{ url_for('claims_queue') }}" class="filter-bar">
 
     <input type="text" name="search" class="filter-input"
-         placeholder="Search Claim ID, Product ID, .." value="{{ search }}">
+         placeholder="Search Claim ID, Product ID, .." >
 
     <select name="category" class="filter-select" >
         <option value=""> All Categories</option>
@@ -44,21 +44,20 @@ My Products
                                 <th>Retailer</th>
                             </tr>
                         </thead>
-                        <tbody>
+                                                <tbody>
+                            {% for product in products %}
                             <tr>
-                                <td>#PRD-401</td>
-                                <td>UltraHD Smart TV 55"</td>
-                                <td>SN-99082011</td>
-                                <td>2024-11-15</td>
-                                <td>TechMart Corp</td>
+                                <td>#{{ product.product_id }}</td>
+                                <td>{{ product.brand }} {{ product.model }}</td>
+                                <td>{{ product.serial_number }}</td>
+                                <td>{{ product.purchase_date }}</td>
+                                <td>{{ product.retailer }}</td>
                             </tr>
+                            {% else %}
                             <tr>
-                                <td>#PRD-402</td>
-                                <td>Front Load Washing Machine</td>
-                                <td>SN-88203911</td>
-                                <td>2024-10-02</td>
-                                <td>HomeAppliances Ltd</td>
+                                <td colspan="5">No products registered yet.</td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>

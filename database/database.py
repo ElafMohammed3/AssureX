@@ -18,10 +18,7 @@ DB_NAME = os.getenv("DB_NAME", "assurex")
 # MySQL is the primary datastore. ASSUREX_DATABASE_URL overrides it, which lets
 # an evaluator run the application with no database server installed, for
 # example:  ASSUREX_DATABASE_URL=sqlite:///assurex.db  py -3 app.py
-DATABASE_URL = os.getenv("ASSUREX_DATABASE_URL") or (
-    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}"
-    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
-)
+DATABASE_URL = os.getenv("ASSUREX_DATABASE_URL") or "sqlite:///assurex.db"
 
 SERVER_DATABASE_URL = (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}"

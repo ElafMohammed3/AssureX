@@ -33,6 +33,7 @@
             display: flex;
             min-height: 100vh;
             overflow-x: hidden;
+            flex-wrap: wrap;
         }
 
         .sidebar {
@@ -277,52 +278,41 @@
 {% include "_nav.html" %}
 
 
-    <aside class="sidebar">
-        <div class="brand">AssureX Engine</div>
-        <ul class="nav-menu">
-            <li class="nav-item active"><a href="#">Dashboard</a></li>
-            <li class="nav-item"><a href="#">My Products</a></li>
-            <li class="nav-item"><a href="#">Warranty Records</a></li>
-            <li class="nav-item"><a href="#">Submit Claim</a></li>
-            <li class="nav-item"><a href="#">Claim Status</a></li>
-            <li class="nav-item"><a href="#">Receipt Vault</a></li>
-        </ul>
-    </aside>
 
     <div class="main-wrapper">
         <header class="top-header">
             <h2>Customer Overview</h2>
             <div class="user-profile">
                 <div>
-                    <div style="font-weight: bold;">John Doe</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">User ID: USR-8802</div>
+                    <div style="font-weight: bold;">{{ current_user.full_name }}</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">User ID: {{ current_user.user_id }}</div>
                 </div>
-                <div class="avatar">JD</div>
+                <div class="avatar">{{ current_user.full_name[:1]|upper }}</div>
             </div>
         </header>
 
         <main class="content-area">
             <div class="action-bar">
-                <a href="#" class="btn-primary">Register New Product</a>
-                <a href="#" class="btn-secondary">Submit New Claim</a>
+                <a href="{{ url_for('my_products') }}" class="btn-primary">My Products</a>
+                <a href="{{ url_for('create_claim') }}" class="btn-secondary">Submit New Claim</a>
             </div>
 
-            <div class="kpi-grid">
+                       <div class="kpi-grid">
                 <div class="kpi-card">
                     <span class="label">Registered Products</span>
-                    <span class="number">6</span>
+                    <span class="number">{{ stats.products }}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">Active Warranties</span>
-                    <span class="number">4</span>
+                    <span class="number">{{ stats.active_warranties }}</span>
                 </div>
                 <div class="kpi-card">
                     <span class="label">Pending Claims</span>
-                    <span class="number">1</span>
+                    <span class="number">{{ stats.pending }}</span>
                 </div>
                 <div class="kpi-card highlight">
                     <span class="label">Expiring Warranties (30 Days)</span>
-                    <span class="number">2</span>
+                    <span class="number">{{ stats.expiring_soon }}</span>
                 </div>
             </div>
 
@@ -341,28 +331,28 @@
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
+                                                <tbody>
+                            {% for warranty in warranties %}
                             <tr>
-                                <td>UltraHD Smart TV 55"</td>
-                                <td>TV-55-4K</td>
-                                <td>SN-99082011</td>
-                                <td>2026-11-15</td>
-                                <td><span class="badge badge-active">Active</span></td>
+                                <td>{{ warranty.product.product_name }}</td>
+                                <td>{{ warranty.product.model_number }}</td>
+                                <td>{{ warranty.product.serial_number }}</td>
+                                <td>{{ warranty.expiry_date }}</td>
+                                <td>
+                                    {% if warranty.status == 'Active' %}
+                                        <span class="badge badge-active">Active</span>
+                                    {% elif warranty.status == 'Expired' %}
+                                        <span class="badge badge-expired">Expired</span>
+                                    {% else %}
+                                        <span class="badge badge-pending">{{ warranty.status }}</span>
+                                    {% endif %}
+                                </td>
                             </tr>
+                            {% else %}
                             <tr>
-                                <td>Front Load Washing Machine</td>
-                                <td>WM-FL-08</td>
-                                <td>SN-88203911</td>
-                                <td>2026-10-02</td>
-                                <td><span class="badge badge-pending">Expiring Soon</span></td>
+                                <td colspan="5">No products registered yet.</td>
                             </tr>
-                            <tr>
-                                <td>Inverter Refrigerator 450L</td>
-                                <td>RF-450-INV</td>
-                                <td>SN-11029384</td>
-                                <td>2025-05-20</td>
-                                <td><span class="badge badge-expired">Expired</span></td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -371,17 +361,15 @@
                     <div class="section-header">
                         <h3 class="section-title">Recent Notifications</h3>
                     </div>
-                    <div class="notification-item">
-                        <div class="title">Claim Under Review</div>
-                        <div class="desc">Claim #CLM-9082 for Washing Machine is currently undergoing automated evaluation.</div>
-                    </div>
-                    <div class="notification-item" style="border-left-color: var(--status-review);">
-                        <div class="title">Warranty Expiry Alert</div>
-                        <div class="desc">Your warranty for Front Load Washing Machine expires in 6 days.</div>
-                    </div>
-                    <div class="notification-item" style="border-left-color: var(--status-valid);">
-                        <div class="title">Product Registered</div>
-                        <div class="desc">UltraHD Smart TV 55" was successfully registered with Product ID #PRD-401.</div>
+                                        <div class="notification-item">
+                        <div class="title">Recent Claims</div>
+                        {% for claim in claims[:5] %}
+                        <div class="desc">
+                            #{{ claim.claim_id }} &middot; {{ claim.product.product_name }} &middot; {{ claim.status }}
+                        </div>
+                        {% else %}
+                        <div class="desc">You have not submitted any claims yet.</div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -400,21 +388,23 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                                       <tbody>
+                        {% for claim in claims %}
                         <tr>
-                            <td>#CLM-9082</td>
-                            <td>Front Load Washing Machine</td>
-                            <td>2026-09-24</td>
-                            <td><span class="badge badge-pending">Under Evaluation</span></td>
-                            <td><a href="#" style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">View Details</a></td>
+                            <td>#{{ claim.claim_id }}</td>
+                            <td>{{ claim.product.product_name }}</td>
+                            <td>{{ claim.submission_date.strftime('%Y-%m-%d') }}</td>
+                            <td><span class="badge badge-pending">{{ claim.status }}</span></td>
+                            <td>
+                                <a href="{{ url_for('claim_details', claim_id=claim.claim_id) }}"
+                                   style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">View Details</a>
+                            </td>
                         </tr>
+                        {% else %}
                         <tr>
-                            <td>#CLM-8104</td>
-                            <td>Inverter Refrigerator 450L</td>
-                            <td>2026-01-12</td>
-                            <td><span class="badge badge-expired">Rejected</span></td>
-                            <td><a href="#" style="color: var(--primary-burgundy); font-weight: bold; text-decoration: none;">View Report</a></td>
+                            <td colspan="5">No claims submitted yet.</td>
                         </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
