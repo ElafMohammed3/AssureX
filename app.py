@@ -393,7 +393,7 @@ def profile():
 @login_required
 def customer_dashboard():
     user = current_user()
-    products = Product.query.filter_by(user_id=user.user_id).all()
+    products = Product.query.filter_by(user_id=user.id).all()
 
     product_ids = [product.id for product in products]
     warranties = (
@@ -402,7 +402,7 @@ def customer_dashboard():
         else []
     )
 
-    claims = Claim.query.filter_by(user_id=user.user_id).all()
+    claims = Claim.query.filter_by(user_id=user.id).all()
 
     return render_template(
         "CustomerDashbourd.html",
@@ -527,8 +527,8 @@ def claim_details(claim_id: str):
     return render_template(
         "claim-details.html",
         claim=claim,
-        evaluations=Evaluation.query.filter_by(claim_id=claim_id).all(),
-        reviews=ReviewAction.query.filter_by(claim_id=claim_id).all(),
+        evaluations=Evaluation.query.filter_by(claim_id=claim.id).all(),
+        reviews=ReviewAction.query.filter_by(claim_id=claim.id).all(),
     )
 
 
@@ -587,7 +587,7 @@ def manual_review_queue():
 def my_products():
     return render_template(
         "my_products.html",
-        products=Product.query.filter_by(user_id=current_user().user_id).all(),
+        products=Product.query.filter_by(user_id=current_user().id).all(),
     )
 
 
@@ -602,7 +602,7 @@ def receipt_vault():
 def claim_status():
     return render_template(
         "claim_status.html",
-        claims=Claim.query.filter_by(user_id=current_user().user_id).all(),    )
+        claims=Claim.query.filter_by(user_id=current_user().id).all(),    )
 
 
 @app.route("/claims/submit")
@@ -611,7 +611,7 @@ def submit_claim():
     return render_template(
         "submit_claim.html",
         products=Product.query.filter_by(
-            user_id=current_user().user_id
+            user_id=current_user().id
         ).all(),
     )
 
