@@ -42,6 +42,14 @@ dataset/
 
 models/
   model_1.ipynb                # initial preprocessing notebook
+
+  ## Image classifier
+
+The Claim Summary Card image classifier is a Google Teachable Machine project:
+<https://teachablemachine.withgoogle.com/models/O5nayhm-e/>. The exported model
+is `models/teachable_machine/keras_model.h5`. Full deliverable 5 evidence,
+including training observations and the holdout measurement attempt, is in
+`models/teachable_machine/README.md`.
 ```
 
 ## Requirements

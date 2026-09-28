@@ -1,7 +1,3 @@
-
-The Claim Summary Card image classifier is a Google Teachable Machine project:
-<https://teachablemachine.withgoogle.com/models/mgAFrC5T1/>. See
-`models/teachable_machine/README.md` for the full deliverable 5 evidence.
 # Google Teachable Machine — Claim Summary Card Classifier
 
 SRS deliverable 5 evidence. Covers functional requirement xxi and
@@ -11,11 +7,11 @@ non-functional requirement 4.
 
 | Field | Value |
 |---|---|
-| Hosted project link | https://teachablemachine.withgoogle.com/models/mgAFrC5T1/ |
+| Hosted project link | https://teachablemachine.withgoogle.com/models/O5nayhm-e/ (retrained) · https://teachablemachine.withgoogle.com/models/mgAFrC5T1/ (first run) |
 | Teachable Machine version | 2.4.16 |
-| Exported format | TensorFlow.js |
-| Export files | `model.json`, `weights.bin`, `metadata.json` |
-| Model version | TM 2.4.16, exported 2026-09-27 |
+| Exported format | TensorFlow / Keras |
+| Export files | `keras_model.h5`, `labels.txt`, `metadata.json` |
+| Model version | TM 2.4.16, exported 2026-09-28 |
 | Labels | `Valid Claim`, `Invalid Claim`, `Manual Review` |
 | Input size | 224 x 224 |
 
@@ -35,6 +31,7 @@ variants, so no claim information changes.
 
 `dataset/cards/validation/` (225) and `dataset/cards/test/` (225) were never
 uploaded.
+
 
 ## Training configuration
 
@@ -81,3 +78,26 @@ The figures above are Teachable Machine's own holdout, which is 15% of the
 sibling image may sit in the training half while its partner is scored. The
 figure is therefore optimistic. The measured accuracy on the 225 unseen cards
 in `dataset/cards/test/` is reported in `reports/`.
+
+## Holdout measurement: attempted and not completed
+
+Accuracy on the 225 strictly unseen cards in `dataset/cards/test/` could not
+be measured. Three loading routes were tried and all failed.
+
+| Route | Result |
+|---|---|
+| `tf.loadLayersModel` on the TensorFlow.js export | Loads structurally, `countParams` 538,608 and all 263 weight names resolve, but returns a saturated output for every input including uniform random noise. |
+| `@teachablemachine/image` on the same file | Rejected: `Cannot read properties of null (reading 'packageVersion')`. The export omits the `format` and `packageVersion` fields the library requires. |
+| `tf_keras` 2.21 on the Keras export | Loads cleanly. Across 24 test cards and three input conventions (0-1, 0-255, and MobileNet `x/127.5-1`) it never once predicted `Valid Claim`. |
+
+The defect is in the Teachable Machine export step, not in the training, the
+dataset, or the application. The in-browser model scores 87.94% on the
+platform's own holdout; the exported artefacts do not reproduce that.
+
+## Label truncation
+
+Teachable Machine truncates class names to 12 characters in its export, so
+`Invalid Claim` became `Invalid Clai...` and `Manual Review` became
+`Manual Revie...`. The names in `labels.txt` and `metadata.json` were corrected
+by hand, because `src/claim_service.py` matches confidence labels by exact
+string and would otherwise store `None` for two of the three classes.

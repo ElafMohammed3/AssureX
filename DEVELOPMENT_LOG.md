@@ -102,3 +102,30 @@ duplicate files were removed in a later commit, but the orphaned image blobs
 remain in history and account for most of the 1.1 GB `.git` size. History was
 not rewritten, because the team rule forbids force pushes and the repository is
 shared.
+
+
+### Image model: Teachable Machine export could not be reloaded
+
+The Claim Summary Card classifier trained in Google Teachable Machine to 87.94%
+accuracy on the platform's internal holdout. That holdout is drawn from the
+2,100 uploaded training images, of which each claim contributed two visual
+variations, so a claim's sibling image may sit in the training half while its
+partner is scored. The figure is therefore optimistic and is not reported as a
+test accuracy.
+
+A measurement on the 225 strictly held-out cards in `dataset/cards/test/` was
+attempted and could not be completed. The TensorFlow.js export produced by
+Teachable Machine 2.4.16 contains only `modelTopology` and `weightsManifest`.
+It omits the `format` and `packageVersion` fields that `@teachablemachine/image`
+requires, so the artefact is rejected by Teachable Machine's own library with
+`Cannot read properties of null (reading 'packageVersion')`. Loading the same
+file as a bare Keras model succeeds structurally, but the outputs are saturated
+and the model does not recognise its own training images, which is consistent
+with the export omitting the wrapper's preprocessing.
+
+`packageVersion` is present in `metadata.json`, a separate file the library
+does not read.
+
+Consequence: SRS xxi is implemented in the browser interface only. SRS
+non-functional requirement 4 is PARTIAL, with the Python model measured at
+92.89% and the image model unverified on a holdout.
