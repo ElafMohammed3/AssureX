@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warranty Details - AssureX</title>
+    
+    <!-- Bootstrap 5 LTR -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts (Poppins & Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --burgundy-primary: #800020;
+            --burgundy-dark: #580016;
+            --burgundy-light: #fdf2f4;
+            --burgundy-hover: #990026;
+            --accent-gold: #d4af37;
+            --text-main: #2b2b2b;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: var(--text-main);
+        }
+
+        /* Navbar Burgundy */
+        .navbar-burgundy {
+            background-color: var(--burgundy-primary);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        /* Cards & Borders */
+        .card-custom {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(128, 0, 32, 0.06);
+            background: #ffffff;
+            margin-bottom: 1.5rem;
+            border-top: 3px solid var(--burgundy-primary);
+        }
+
+        .card-header-custom {
+            background-color: transparent;
+            border-bottom: 1px solid #f1f1f1;
+            padding: 1.25rem 1.5rem;
+            font-weight: 700;
+            color: var(--burgundy-primary);
+        }
+
+        /* Burgundy Action Buttons */
+        .btn-burgundy {
+            background-color: var(--burgundy-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-burgundy:hover {
+            background-color: var(--burgundy-hover);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-burgundy {
+            border: 1px solid var(--burgundy-primary);
+            color: var(--burgundy-primary);
+            background: transparent;
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-burgundy:hover {
+            background-color: var(--burgundy-primary);
+            color: #ffffff;
+        }
+
+        .info-label {
+            color: #6c757d;
+            font-size: 0.88rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .badge-burgundy {
+            background-color: var(--burgundy-light);
+            color: var(--burgundy-primary);
+            border: 1px solid var(--burgundy-primary);
+            font-size: 0.85rem;
+            padding: 0.35em 0.8em;
+            border-radius: 20px;
+        }
+
+        /* Print Mode */
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: #fff; }
+            .card-custom { box-shadow: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Burgundy Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-burgundy no-print mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/"><i class="fa-solid fa-shield-halved me-2"></i>AssureX Claim Engine</a>
+            <div class="ms-auto">
+                <a href="/" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-house me-1"></i> Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+
+        <!-- Header Title & Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 gap-2">
+            <div>
+                <h3 class="fw-bold mb-1" style="color: var(--burgundy-primary);"><i class="fa-solid fa-file-contract me-2"></i>Warranty Record Details</h3>
+                <p class="text-muted mb-0">Warranty Reference ID: #{{ warranty.warranty_id }}</p>
+            </div>
+            
+            <div class="d-flex gap-2 no-print">
+                <button onclick="window.print()" class="btn btn-outline-burgundy">
+                    <i class="fa-solid fa-print me-1"></i> Print
+                </button>
+                <button onclick="downloadReport()" class="btn btn-burgundy">
+                    <i class="fa-solid fa-download me-1"></i> Export PDF
+                </button>
+                <a href="/claim/new?warranty_id={{ warranty.warranty_id }}" class="btn btn-danger">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> File Claim
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Side: Product & Coverage Info -->
+            <div class="col-lg-8">
+                
+                <!-- Product Information Card -->
+                <div class="card card-custom">
+                    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-laptop me-2"></i>Product & Hardware Info</span>
+                        <span class="badge badge-burgundy">{{ product.brand }}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="info-label">Product Name:</div>
+                                <div class="info-value">{{ product.product_name }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Serial Number (S/N):</div>
+                                <div class="info-value"><code class="text-dark">{{ product.serial_number }}</code></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Model Number:</div>
+                                <div class="info-value">{{ product.model_number or 'N/A' }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Purchase Date:</div>
+                                <div class="info-value">{{ product.purchase_date or 'N/A' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warranty Coverage Card -->
+                <div class="card card-custom">
+                    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-shield-check me-2"></i>Coverage & Conditions</span>
+                        {% if warranty.status == 'active' %}
+                            <span class="badge bg-success"><i class="fa-solid fa-circle me-1"></i>Active</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fa-solid fa-circle me-1"></i>Expired</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <div class="info-label">Warranty Provider:</div>
+                                <div class="info-value">{{ warranty.warranty_provider }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-label">Start Date:</div>
+                                <div class="info-value">{{ warranty.start_date }}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-label">Expiry Date:</div>
+                                <div class="info-value">{{ warranty.expiry_date }}</div>
+                            </div>
+                        </div>
+
+                        <hr class="text-muted opacity-25">
+
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-success"><i class="fa-solid fa-circle-check me-1"></i> Covered Conditions:</h6>
+                            <p class="text-muted small mb-0">{{ warranty.coverage_conditions or 'Covers manufacturing defects and internal hardware failures.' }}</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Exclusions:</h6>
+                            <p class="text-muted small mb-0">{{ warranty.exclusions or 'Liquid damage, physical breakage, and unauthorized modifications are excluded.' }}</p>
+                        </div>
+
+                        <div>
+                            <h6 class="fw-bold text-dark"><i class="fa-solid fa-building me-1"></i> Authorized Service Centers:</h6>
+                            <p class="text-muted small mb-0">{{ warranty.service_center_details or 'Official Manufacturer Authorized Service Center.' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repair History Card -->
+                <div class="card card-custom">
+                    <div class="card-header card-header-custom">
+                        <i class="fa-solid fa-wrench me-2"></i>Repair & Maintenance History
+                    </div>
+                    <div class="card-body p-0">
+                        {% if repair_histories %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Service Center</th>
+                                            <th>Replaced Parts</th>
+                                            <th>Outcome</th>
+                                            <th>Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for repair in repair_histories %}
+                                        <tr>
+                                            <td>{{ repair.repair_date }}</td>
+                                            <td>{{ repair.repair_center }}</td>
+                                            <td>{{ repair.replaced_parts or 'None' }}</td>
+                                            <td><span class="badge bg-success">{{ repair.repair_outcome }}</span></td>
+                                            <td>${{ repair.repair_cost }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-center text-muted">
+                                <i class="fa-solid fa-clipboard-check fa-2x mb-2 d-block opacity-50"></i>
+                                No repair history or maintenance records found for this product.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Side: Counter & Attachments -->
+            <div class="col-lg-4">
+                
+                <!-- Remaining Days Counter Card -->
+                <div class="card card-custom text-center p-4">
+                    <h6 class="text-muted mb-2">Warranty Days Remaining</h6>
+                    <div class="display-5 fw-bold mb-2" style="color: var(--burgundy-primary);">{{ remaining_days }}</div>
+                    <p class="text-muted small">Days left until current policy expires</p>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 70%; background-color: var(--burgundy-primary);" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <button onclick="extendWarranty()" class="btn btn-outline-burgundy btn-sm no-print">
+                        <i class="fa-solid fa-clock-rotate-left me-1"></i> Request Extension
+                    </button>
+                </div>
+
+                <!-- Receipts & Documents Card -->
+                <div class="card card-custom">
+                    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-paperclip me-2"></i>Attached Documents</span>
+                        <span class="badge badge-burgundy">{{ receipts_documents|length }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% if receipts_documents %}
+                            <div class="list-group list-group-flush">
+                                {% for doc in receipts_documents %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        <i class="fa-solid fa-file-pdf text-danger me-2"></i>
+                                        <span class="fw-semibold small text-capitalize">{{ doc.document_type }}</span>
+                                    </div>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ doc.file_path }}" target="_blank" class="btn btn-sm btn-light border" title="View">
+                                            <i class="fa-solid fa-eye text-secondary"></i>
+                                        </a>
+                                        <a href="{{ doc.file_path }}" download class="btn btn-sm btn-light border" title="Download">
+                                            <i class="fa-solid fa-download" style="color: var(--burgundy-primary);"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted small mb-0 text-center py-3">No documents or receipts attached.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Action Handlers -->
+    <script>
+        function downloadReport() {
+            window.print();
+        }
+
+        function extendWarranty() {
+            if(confirm("Would you like to request a warranty extension for this product?")) {
+                alert("Warranty extension request submitted successfully! Our team will contact you shortly.");
+            }
+        }
+    </script>
+</body>
+</html>

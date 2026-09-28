@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssureX - Submission Guidelines & Help Center</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --burgundy-primary: #800020;
+            --burgundy-dark: #580016;
+            --burgundy-hover: #9e0028;
+            --burgundy-soft: #fcf4f6;
+            --burgundy-border: #f1cfd7;
+            --text-main: #1e293b;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+        }
+
+        .navbar-custom {
+            background-color: var(--burgundy-primary);
+            box-shadow: 0 4px 20px rgba(128, 0, 32, 0.15);
+            padding: 0.8rem 0;
+        }
+        .navbar-custom .navbar-brand {
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .hero-banner {
+            background: linear-gradient(135deg, var(--burgundy-primary) 0%, var(--burgundy-dark) 100%);
+            color: #ffffff;
+            padding: 40px 0;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 30px;
+        }
+
+        .card-custom {
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.03);
+        }
+
+        .card-header-burgundy {
+            background-color: var(--burgundy-soft);
+            border-bottom: 1px solid var(--burgundy-border);
+            padding: 1.2rem 1.5rem;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+        }
+        .card-header-burgundy h5 {
+            color: var(--burgundy-primary);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .btn-burgundy {
+            background-color: var(--burgundy-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-burgundy:hover {
+            background-color: var(--burgundy-hover);
+            color: #ffffff;
+        }
+
+        .step-badge {
+            width: 32px;
+            height: 32px;
+            background-color: var(--burgundy-soft);
+            color: var(--burgundy-primary);
+            border: 1px solid var(--burgundy-border);
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        /* Pure CSS Custom Modal */
+        .custom-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-modal-box {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: fadeIn 0.2s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fa-solid fa-shield-halved me-2"></i> AssureX Claim Engine
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Banner -->
+    <div class="hero-banner text-center">
+        <div class="container">
+            <h1 class="fw-bold mb-2">Claim Preparation Assistance</h1>
+            <p class="lead text-white-50 mb-0">Ensure your warranty claim is valid before final submission.</p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row g-4">
+            
+            <!-- Readiness Checker -->
+            <div class="col-12">
+                <div class="card card-custom">
+                    <div class="card-header card-header-burgundy">
+                        <h5><i class="fa-solid fa-wand-magic-sparkles me-2"></i> Claim Quality & Readiness Checker</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="readinessForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Purchase Date</label>
+                                <input type="date" id="purchase_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Fault Date</label>
+                                <input type="date" id="fault_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold mb-2">Attachable Evidence</label>
+                                <div class="form-check">
+                                    <input class="form-check-input doc-check" type="checkbox" value="receipt" id="doc1">
+                                    <label class="form-check-label small" for="doc1">Purchase Receipt / Invoice</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input doc-check" type="checkbox" value="serial_image" id="doc2">
+                                    <label class="form-check-label small" for="doc2">Serial Number Tag Photo</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input doc-check" type="checkbox" value="damage_image" id="doc3">
+                                    <label class="form-check-label small" for="doc3">Damage Photo</label>
+                                </div>
+                            </div>
+                            <div class="col-12 text-end mt-3">
+                                <button type="button" onclick="runReadinessCheck()" class="btn btn-burgundy">
+                                    <i class="fa-solid fa-magnifying-glass me-2"></i> Validate Claim Readiness
+                                </button>
+                            </div>
+                        </form>
+                        <div id="checkResult" class="mt-4" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps & Policies -->
+            <div class="col-lg-8">
+                <div class="card card-custom mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4" style="color: var(--burgundy-primary);"><i class="fa-solid fa-list-check me-2"></i> Submission Requirements</h4>
+                        
+                        <div class="d-flex align-items-start mb-3">
+                            <span class="step-badge">1</span>
+                            <div>
+                                <h6 class="fw-bold mb-1">Serial Number Verification</h6>
+                                <p class="text-muted small mb-0">Ensure serial number matches invoice receipt and physical product tag.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <span class="step-badge">2</span>
+                            <div>
+                                <h6 class="fw-bold mb-1">Clear Documentation Uploads</h6>
+                                <p class="text-muted small mb-0">Upload high-quality images of invoice and damage proof.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <span class="step-badge">3</span>
+                            <div>
+                                <h6 class="fw-bold mb-1">Dual AI Validation System</h6>
+                                <p class="text-muted small mb-0">Claim evaluated via Python machine learning model & Teachable Machine.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Box -->
+            <div class="col-lg-4">
+                <div class="card card-custom p-4 text-center" style="background-color: var(--burgundy-soft); border: 1px dashed var(--burgundy-border);">
+                    <i class="fa-solid fa-headset fa-2x mb-3" style="color: var(--burgundy-primary);"></i>
+                    <h5 class="fw-bold mb-2">Need Assistance?</h5>
+                    <p class="small text-muted mb-3">Contact technical support for pending claims or system inquiries.</p>
+                    <button type="button" class="btn btn-burgundy w-100" onclick="openModal()">
+                        <i class="fa-solid fa-envelope me-2"></i> Contact Technical Support
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PURE CSS/JS CUSTOM MODAL -->
+    <div id="customModal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <div class="p-3 d-flex justify-content-between align-items-center" style="background-color: var(--burgundy-soft); border-bottom: 1px solid var(--burgundy-border);">
+                <h5 class="fw-bold mb-0" style="color: var(--burgundy-primary);">
+                    <i class="fa-solid fa-headset me-2"></i> Contact Technical Support
+                </h5>
+                <button type="button" class="btn-close" onclick="closeModal()"></button>
+            </div>
+            <div class="p-4">
+                <form id="supportForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Your Email</label>
+                        <input type="email" class="form-control" id="supportEmail" placeholder="name@example.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Subject / Claim ID</label>
+                        <input type="text" class="form-control" id="supportSubject" placeholder="e.g. Inquiry about Claim #1024" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Message</label>
+                        <textarea class="form-control" id="supportMessage" rows="3" placeholder="Describe your issue..." required></textarea>
+                    </div>
+                    <button type="button" onclick="sendTicket()" class="btn btn-burgundy w-100">
+                        <i class="fa-solid fa-paper-plane me-2"></i> Send Message
+                    </button>
+                </form>
+                <div id="supportSuccess" class="alert alert-success mt-3 mb-0" style="display: none;">
+                    <i class="fa-solid fa-circle-check me-2"></i> Message sent successfully!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('customModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').style.display = 'none';
+        }
+
+        function sendTicket() {
+            const email = document.getElementById('supportEmail').value;
+            const subject = document.getElementById('supportSubject').value;
+            const msg = document.getElementById('supportMessage').value;
+
+            if(!email || !subject || !msg) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            document.getElementById('supportSuccess').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('supportSuccess').style.display = 'none';
+                document.getElementById('supportForm').reset();
+                closeModal();
+            }, 1500);
+        }
+
+        function runReadinessCheck() {
+            const purchaseDate = document.getElementById('purchase_date').value;
+            const faultDate = document.getElementById('fault_date').value;
+            const docCheckboxes = document.querySelectorAll('.doc-check:checked');
+            
+            let selectedDocs = [];
+            docCheckboxes.forEach(cb => selectedDocs.push(cb.value));
+
+            if(!purchaseDate || !faultDate) {
+                alert('Please select both purchase date and fault date.');
+                return;
+            }
+
+            fetch('/api/check-claim-readiness', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    purchase_date: purchaseDate,
+                    fault_date: faultDate,
+                    files: selectedDocs
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const resultDiv = document.getElementById('checkResult');
+                resultDiv.style.display = 'block';
+                
+                if (data.is_ready) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success d-flex align-items-center mb-0">
+                            <i class="fa-solid fa-circle-check fa-2x me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Claim Readiness Passed!</h6>
+                                <p class="mb-0 small">All required evidence is complete and ready for submission.</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    let missingList = data.missing_info.map(i => `<li>${i}</li>`).join('');
+                    let contraList = data.contradictions.map(i => `<li>${i}</li>`).join('');
+
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-warning mb-0">
+                            <h6 class="fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Issues Found:</h6>
+                            ${missingList ? `<ul class="small text-danger mb-1">${missingList}</ul>` : ''}
+                            ${contraList ? `<ul class="small text-danger mb-1">${contraList}</ul>` : ''}
+                        </div>
+                    `;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
