@@ -1,3 +1,24 @@
+"""
+Flask entry point for the AssureX Claim Engine.
+
+Run it with:
+
+    py -3 app.py
+
+By default this targets MySQL using the DB_* environment variables. To run
+with no database server installed, use SQLite:
+
+    set ASSUREX_DATABASE_URL=sqlite:///assurex.db
+    py -3 app.py
+
+SRS coverage provided by this module:
+    i, ii     registration, login, logout, role-based access
+    xl, xli   customer and administrator dashboards
+    xlii      search and filtering entry points
+    xviii, xix  Python model prediction and three-class confidence
+    xxv       warranty rule validation
+"""
+
 from __future__ import annotations
 
 import json
@@ -16,23 +37,6 @@ from flask import (
     url_for,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask import Flask, render_template, request, jsonify
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
-from urllib.parse import quote_plus
-# import os
-from claim_service import derive_claim_features, persist_submission  # noqa: E402
-from decision_engine import decide_from_evaluation  # noqa: E402
-from database.database import app  # noqa: E402
-
-# ============================================================
-# FLASK CONFIGURATION
-# ============================================================
-
-app = Flask(__name__)
-
-app.config["JSON_SORT_KEYS"] = False
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -48,6 +52,12 @@ from database import (  # noqa: E402
     db,
     initialize_database,
 )
+from claim_service import derive_claim_features, persist_submission  # noqa: E402
+from decision_engine import decide_from_evaluation  # noqa: E402
+
+# The database module created its own Flask instance, so point it at the
+# repository-level template and static folders rather than database/.
+from database.database import app  # noqa: E402
 
 app.template_folder = str(PROJECT_ROOT / "templates")
 app.static_folder = str(PROJECT_ROOT / "static")
@@ -95,1330 +105,6 @@ ACTION_OVERRIDE = "Override"
 _pipeline_cache: dict[str, object] = {}
 
 
-
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "assurex")
-
-
-DATABASE_URL = (
-    f"mysql+pymysql://"
-    f"{quote_plus(DB_USER)}:"
-    f"{quote_plus(DB_PASSWORD)}@"
-    f"{DB_HOST}:{DB_PORT}/"
-    f"{DB_NAME}"
-)
-
-
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_recycle=3600
-)
-
-
-# ============================================================
-# DATABASE TABLE NAMES
-# ============================================================
-#
-# IMPORTANT:
-# Change these ONLY if your datapy uses different names.
-#
-
-CLAIMS_TABLE = "claims"
-PRODUCTS_TABLE = "products"
-USERS_TABLE = "users"
-PREDICTIONS_TABLE = "predictions"
-
-
-# ============================================================
-# HELPER FUNCTIONS
-# ============================================================
-
-def query_database(query, params=None):
-    """
-    Execute a SELECT query and return rows as dictionaries.
-    """
-
-    try:
-        with engine.connect() as connection:
-
-            result = connection.execute(
-                text(query),
-                params or {}
-            )
-
-            return [
-                dict(row._mapping)
-                for row in result
-            ]
-
-    except SQLAlchemyError as error:
-
-        print("DATABASE ERROR:")
-        print(error)
-
-        return []
-
-
-def execute_database(query, params=None):
-    """
-    Execute INSERT / UPDATE / DELETE queries.
-    """
-
-    try:
-
-        with engine.begin() as connection:
-
-            result = connection.execute(
-                text(query),
-                params or {}
-            )
-
-            return result.rowcount
-
-    except SQLAlchemyError as error:
-
-        print("DATABASE ERROR:")
-        print(error)
-
-        return 0
-
-
-# ============================================================
-# STATUS CLASSIFICATION
-# ============================================================
-
-def status_class(status):
-
-    if not status:
-        return "badge-review"
-
-    status = str(status).lower()
-
-    if "valid" in status and "invalid" not in status:
-        return "badge-valid"
-
-    if "invalid" in status:
-        return "badge-invalid"
-
-    return "badge-review"
-
-
-# ============================================================
-# ADMIN DASHBOARD
-# ============================================================
-
-@app.route("/")
-def home():
-
-    return dashboard()
-
-
-@app.route("/admin/dashboard")
-def dashboard():
-
-    # --------------------------------------------------------
-    # BASIC CLAIM COUNTS
-    # --------------------------------------------------------
-
-    total_claims = query_database(
-        f"""
-        SELECT COUNT(*) AS total
-        FROM {CLAIMS_TABLE}
-        """
-    )
-
-    valid_claims = query_database(
-        f"""
-        SELECT COUNT(*) AS total
-        FROM {CLAIMS_TABLE}
-        WHERE LOWER(final_status) IN
-        ('likely valid', 'valid claim', 'approved')
-        """
-    )
-
-    invalid_claims = query_database(
-        f"""
-        SELECT COUNT(*) AS total
-        FROM {CLAIMS_TABLE}
-        WHERE LOWER(final_status) IN
-        ('likely invalid', 'invalid claim', 'rejected')
-        """
-    )
-
-    manual_review = query_database(
-        f"""
-        SELECT COUNT(*) AS total
-        FROM {CLAIMS_TABLE}
-        WHERE LOWER(final_status) IN
-        (
-            'manual review',
-            'manual review required'
-        )
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # DUPLICATES
-    # --------------------------------------------------------
-
-    duplicate_alerts = query_database(
-        f"""
-        SELECT COUNT(*) AS total
-        FROM {CLAIMS_TABLE}
-        WHERE duplicate_indicator = 1
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # MODEL DISAGREEMENTS
-    # --------------------------------------------------------
-
-    model_disagreements = query_database(
-        f"""
-        SELECT COUNT(*) AS total
-        FROM {CLAIMS_TABLE}
-        WHERE LOWER(model_consistency_status)
-        IN ('model disagreement', 'disagreement')
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # AVERAGE PYTHON CONFIDENCE
-    # --------------------------------------------------------
-
-    python_confidence = query_database(
-        f"""
-        SELECT AVG(python_confidence) AS average
-        FROM {CLAIMS_TABLE}
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # AVERAGE TEACHABLE MACHINE CONFIDENCE
-    # --------------------------------------------------------
-
-    tm_confidence = query_database(
-        f"""
-        SELECT AVG(teachable_machine_confidence) AS average
-        FROM {CLAIMS_TABLE}
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # LATEST CLAIMS
-    # --------------------------------------------------------
-
-    latest_claims = query_database(
-        f"""
-        SELECT
-            claim_id,
-            product_id,
-            python_prediction,
-            python_confidence,
-            teachable_machine_prediction,
-            teachable_machine_confidence,
-            confidence_difference,
-            rule_engine_result,
-            final_status
-
-        FROM {CLAIMS_TABLE}
-
-        ORDER BY claim_id DESC
-
-        LIMIT 10
-        """
-    )
-
-
-    # --------------------------------------------------------
-    # BUILD STATISTICS OBJECT
-    # --------------------------------------------------------
-
-    stats = {
-
-        "total_claims":
-            total_claims[0]["total"]
-            if total_claims else 0,
-
-        "valid_claims":
-            valid_claims[0]["total"]
-            if valid_claims else 0,
-
-        "invalid_claims":
-            invalid_claims[0]["total"]
-            if invalid_claims else 0,
-
-        "manual_review":
-            manual_review[0]["total"]
-            if manual_review else 0,
-
-        "duplicate_alerts":
-            duplicate_alerts[0]["total"]
-            if duplicate_alerts else 0,
-
-        "model_disagreements":
-            model_disagreements[0]["total"]
-            if model_disagreements else 0,
-
-        "python_confidence":
-            round(
-                float(python_confidence[0]["average"] or 0) * 100,
-                1
-            )
-            if python_confidence else 0,
-
-        "tm_confidence":
-            round(
-                float(tm_confidence[0]["average"] or 0) * 100,
-                1
-            )
-            if tm_confidence else 0
-    }
-
-
-    return render_template(
-        "admin_dashboard.html",
-        stats=stats,
-        claims=latest_claims
-    )
-
-
-# ============================================================
-# ALL CLAIMS QUEUE
-# ============================================================
-
-@app.route("/admin/claims")
-def all_claims():
-    search = request.args.get( "search", "").strip()
-
-    category = request.args.get("category","" ).strip()
-
-    status = request.args.get("status", "" ).strip()
-
-
-    # --------------------------------------------------------
-    # BASE QUERY
-    # --------------------------------------------------------
-
-    query = f"""
-        SELECT
-
-            c.claim_id,
-
-            c.product_id,
-
-            c.submission_date,
-
-            c.python_prediction,
-
-            c.python_confidence,
-
-            c.teachable_machine_prediction,
-
-            c.teachable_machine_confidence,
-
-            c.final_status,
-
-            u.user_id,
-
-            u.name AS claimant_name,
-
-            p.product_name,
-
-            p.category,
-
-            p.serial_number
-
-        FROM {CLAIMS_TABLE} c
-
-        LEFT JOIN {USERS_TABLE} u
-            ON c.user_id = u.user_id
-
-        LEFT JOIN {PRODUCTS_TABLE} p
-            ON c.product_id = p.product_id
-
-        WHERE 1=1
-    """
-
-
-    params = {}
-
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        query += """
-
-            AND (
-                c.claim_id LIKE :search
-                OR c.product_id LIKE :search
-                OR p.serial_number LIKE :search
-                OR u.user_id LIKE :search
-                OR u.name LIKE :search
-            )
-
-        """
-
-        params["search"] = f"%{search}%"
-
-
-    # --------------------------------------------------------
-    # CATEGORY FILTER
-    # --------------------------------------------------------
-
-    if category:
-
-        query += """
-
-            AND LOWER(p.category) = LOWER(:category)
-
-        """
-
-        params["category"] = category
-
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status == "valid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely valid', 'valid claim')
-
-        """
-
-    elif status == "invalid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely invalid', 'invalid claim')
-
-        """
-
-    elif status == "review":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN
-            ('manual review', 'manual review required')
-
-        """
-
-
-    query += """
-
-        ORDER BY c.claim_id DESC
-
-    """
-
-
-    claims = query_database(
-        query,
-        params
-    )
-
-
-    return render_template(
-        "all_claims_queue.html",
-        claims=claims,
-        search=search,
-        category=category,
-        status=status
-    )
-
-
-# ============================================================
-# CLAIM DETAILS API
-# ============================================================
-
-@app.route("/api/claims/<claim_id>")
-def claim_details(claim_id):
-
-    result = query_database(
-        f"""
-        SELECT *
-        FROM {CLAIMS_TABLE}
-        WHERE claim_id = :claim_id
-        LIMIT 1
-        """,
-        {
-            "claim_id": claim_id
-        }
-    )
-
-    if not result:
-
-        return jsonify({
-            "success": False,
-            "message": "Claim not found"
-        }), 404
-
-
-    return jsonify({
-        "success": True,
-        "claim": result[0]
-    })
-
-
-# ============================================================
-# HEALTH CHECK
-# ============================================================
-
-@app.route("/health")
-def health():
-
-    try:
-
-        with engine.connect() as connection:
-
-            connection.execute(
-                text("SELECT 1")
-            )
-
-        return jsonify({
-            "status": "OK",
-            "database": "connected"
-        })
-
-    except Exception as error:
-
-        return jsonify({
-            "status": "ERROR",
-            "database": "not connected",
-            "message": str(error)
-        }), 500
-# ============================================================
-# 
-# ============================================================
-
-@app.route("/admin/manual")
-def manual_review():
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
-
-    status = request.args.get(
-        "status",
-        ""
-    ).strip()
-
-
-    # --------------------------------------------------------
-    # BASE QUERY
-    # --------------------------------------------------------
-
-    query = f"""
-        SELECT
-
-            c.claim_id,
-
-            c.product_id,
-
-            c.submission_date,
-
-            c.python_prediction,
-
-            c.python_confidence,
-
-            c.teachable_machine_prediction,
-
-            c.teachable_machine_confidence,
-
-            c.final_status,
-
-            u.user_id,
-
-            u.name AS claimant_name,
-
-            p.product_name,
-
-            p.category,
-
-            p.serial_number
-
-        FROM {CLAIMS_TABLE} c
-
-        LEFT JOIN {USERS_TABLE} u
-            ON c.user_id = u.user_id
-
-        LEFT JOIN {PRODUCTS_TABLE} p
-            ON c.product_id = p.product_id
-
-        WHERE 1=1
-    """
-
-
-    params = {}
-
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        query += """
-
-            AND (
-                c.claim_id LIKE :search
-                OR c.product_id LIKE :search
-                OR p.serial_number LIKE :search
-                OR u.user_id LIKE :search
-                OR u.name LIKE :search
-            )
-
-        """
-
-        params["search"] = f"%{search}%"
-
-
-    # --------------------------------------------------------
-    # CATEGORY FILTER
-    # --------------------------------------------------------
-
-    if category:
-
-        query += """
-
-            AND LOWER(p.category) = LOWER(:category)
-
-        """
-
-        params["category"] = category
-
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status == "valid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely valid', 'valid claim')
-
-        """
-
-    elif status == "invalid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely invalid', 'invalid claim')
-
-        """
-
-    elif status == "review":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN
-            ('manual review', 'manual review required')
-
-        """
-
-
-    query += """
-
-        ORDER BY c.claim_id DESC
-
-    """
-
-
-    claims = query_database(
-        query,
-        params
-    )
-
-
-    return render_template(
-        "manual_review_queue.html",
-        claims=claims,
-        search=search,
-        category=category,
-        status=status
-    )
-
-# ============================================================
-# 
-# ============================================================
-@app.route("/admin/warranty_rules")
-def warranty_rules():
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
-
-    status = request.args.get(
-        "status",
-        ""
-    ).strip()
-
-
-    # --------------------------------------------------------
-    # BASE QUERY
-    # --------------------------------------------------------
-
-    query = f"""
-        SELECT
-
-            c.claim_id,
-
-            c.product_id,
-
-            c.submission_date,
-
-            c.python_prediction,
-
-            c.python_confidence,
-
-            c.teachable_machine_prediction,
-
-            c.teachable_machine_confidence,
-
-            c.final_status,
-
-            u.user_id,
-
-            u.name AS claimant_name,
-
-            p.product_name,
-
-            p.category,
-
-            p.serial_number
-
-        FROM {CLAIMS_TABLE} c
-
-        LEFT JOIN {USERS_TABLE} u
-            ON c.user_id = u.user_id
-
-        LEFT JOIN {PRODUCTS_TABLE} p
-            ON c.product_id = p.product_id
-
-        WHERE 1=1
-    """
-
-
-    params = {}
-
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        query += """
-
-            AND (
-                c.claim_id LIKE :search
-                OR c.product_id LIKE :search
-                OR p.serial_number LIKE :search
-                OR u.user_id LIKE :search
-                OR u.name LIKE :search
-            )
-
-        """
-
-        params["search"] = f"%{search}%"
-
-
-    # --------------------------------------------------------
-    # CATEGORY FILTER
-    # --------------------------------------------------------
-
-    if category:
-
-        query += """
-
-            AND LOWER(p.category) = LOWER(:category)
-
-        """
-
-        params["category"] = category
-
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status == "valid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely valid', 'valid claim')
-
-        """
-
-    elif status == "invalid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely invalid', 'invalid claim')
-
-        """
-
-    elif status == "review":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN
-            ('manual review', 'manual review required')
-
-        """
-
-
-    query += """
-
-        ORDER BY c.claim_id DESC
-
-    """
-
-
-    claims = query_database(
-        query,
-        params
-    )
-
-
-    return render_template(
-        "warranty_rules_config.html",
-        claims=claims,
-        search=search,
-        category=category,
-        status=status
-    )
-
-
-# ============================================================
-# 
-# ============================================================
-@app.route("/admin/analytics")
-def analytics():
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
-
-    status = request.args.get(
-        "status",
-        ""
-    ).strip()
-
-
-    # --------------------------------------------------------
-    # BASE QUERY
-    # --------------------------------------------------------
-
-    query = f"""
-        SELECT
-
-            c.claim_id,
-
-            c.product_id,
-
-            c.submission_date,
-
-            c.python_prediction,
-
-            c.python_confidence,
-
-            c.teachable_machine_prediction,
-
-            c.teachable_machine_confidence,
-
-            c.final_status,
-
-            u.user_id,
-
-            u.name AS claimant_name,
-
-            p.product_name,
-
-            p.category,
-
-            p.serial_number
-
-        FROM {CLAIMS_TABLE} c
-
-        LEFT JOIN {USERS_TABLE} u
-            ON c.user_id = u.user_id
-
-        LEFT JOIN {PRODUCTS_TABLE} p
-            ON c.product_id = p.product_id
-
-        WHERE 1=1
-    """
-
-
-    params = {}
-
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        query += """
-
-            AND (
-                c.claim_id LIKE :search
-                OR c.product_id LIKE :search
-                OR p.serial_number LIKE :search
-                OR u.user_id LIKE :search
-                OR u.name LIKE :search
-            )
-
-        """
-
-        params["search"] = f"%{search}%"
-
-
-    # --------------------------------------------------------
-    # CATEGORY FILTER
-    # --------------------------------------------------------
-
-    if category:
-
-        query += """
-
-            AND LOWER(p.category) = LOWER(:category)
-
-        """
-
-        params["category"] = category
-
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status == "valid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely valid', 'valid claim')
-
-        """
-
-    elif status == "invalid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely invalid', 'invalid claim')
-
-        """
-
-    elif status == "review":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN
-            ('manual review', 'manual review required')
-
-        """
-
-
-    query += """
-
-        ORDER BY c.claim_id DESC
-
-    """
-
-
-    claims = query_database(
-        query,
-        params
-    )
-
-
-    return render_template(
-        "analytics_reports.html",
-        claims=claims,
-        search=search,
-        category=category,
-        status=status
-    )
-
-
-# ============================================================
-# 
-# ============================================================
-@app.route("/admin/audit_logs")
-def audit_logs():
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
-
-    status = request.args.get(
-        "status",
-        ""
-    ).strip()
-
-
-    # --------------------------------------------------------
-    # BASE QUERY
-    # --------------------------------------------------------
-
-    query = f"""
-        SELECT
-
-            c.claim_id,
-
-            c.product_id,
-
-            c.submission_date,
-
-            c.python_prediction,
-
-            c.python_confidence,
-
-            c.teachable_machine_prediction,
-
-            c.teachable_machine_confidence,
-
-            c.final_status,
-
-            u.user_id,
-
-            u.name AS claimant_name,
-
-            p.product_name,
-
-            p.category,
-
-            p.serial_number
-
-        FROM {CLAIMS_TABLE} c
-
-        LEFT JOIN {USERS_TABLE} u
-            ON c.user_id = u.user_id
-
-        LEFT JOIN {PRODUCTS_TABLE} p
-            ON c.product_id = p.product_id
-
-        WHERE 1=1
-    """
-
-
-    params = {}
-
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        query += """
-
-            AND (
-                c.claim_id LIKE :search
-                OR c.product_id LIKE :search
-                OR p.serial_number LIKE :search
-                OR u.user_id LIKE :search
-                OR u.name LIKE :search
-            )
-
-        """
-
-        params["search"] = f"%{search}%"
-
-
-    # --------------------------------------------------------
-    # CATEGORY FILTER
-    # --------------------------------------------------------
-
-    if category:
-
-        query += """
-
-            AND LOWER(p.category) = LOWER(:category)
-
-        """
-
-        params["category"] = category
-
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status == "valid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely valid', 'valid claim')
-
-        """
-
-    elif status == "invalid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely invalid', 'invalid claim')
-
-        """
-
-    elif status == "review":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN
-            ('manual review', 'manual review required')
-
-        """
-
-
-    query += """
-
-        ORDER BY c.claim_id DESC
-
-    """
-
-
-    claims = query_database(
-        query,
-        params
-    )
-
-
-    return render_template(
-        "audit_logs.html",
-        claims=claims,
-        search=search,
-        category=category,
-        status=status
-    )
-
-
-# ============================================================
-# 
-# ============================================================
-@app.route("/admin/user_management")
-def user_management():
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
-
-    status = request.args.get(
-        "status",
-        ""
-    ).strip()
-
-
-    # --------------------------------------------------------
-    # BASE QUERY
-    # --------------------------------------------------------
-
-    query = f"""
-        SELECT
-
-            c.claim_id,
-
-            c.product_id,
-
-            c.submission_date,
-
-            c.python_prediction,
-
-            c.python_confidence,
-
-            c.teachable_machine_prediction,
-
-            c.teachable_machine_confidence,
-
-            c.final_status,
-
-            u.user_id,
-
-            u.name AS claimant_name,
-
-            p.product_name,
-
-            p.category,
-
-            p.serial_number
-
-        FROM {CLAIMS_TABLE} c
-
-        LEFT JOIN {USERS_TABLE} u
-            ON c.user_id = u.user_id
-
-        LEFT JOIN {PRODUCTS_TABLE} p
-            ON c.product_id = p.product_id
-
-        WHERE 1=1
-    """
-
-
-    params = {}
-
-
-    # --------------------------------------------------------
-    # SEARCH
-    # --------------------------------------------------------
-
-    if search:
-
-        query += """
-
-            AND (
-                c.claim_id LIKE :search
-                OR c.product_id LIKE :search
-                OR p.serial_number LIKE :search
-                OR u.user_id LIKE :search
-                OR u.name LIKE :search
-            )
-
-        """
-
-        params["search"] = f"%{search}%"
-
-
-    # --------------------------------------------------------
-    # CATEGORY FILTER
-    # --------------------------------------------------------
-
-    if category:
-
-        query += """
-
-            AND LOWER(p.category) = LOWER(:category)
-
-        """
-
-        params["category"] = category
-
-
-    # --------------------------------------------------------
-    # STATUS FILTER
-    # --------------------------------------------------------
-
-    if status == "valid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely valid', 'valid claim')
-
-        """
-
-    elif status == "invalid":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN ('likely invalid', 'invalid claim')
-
-        """
-
-    elif status == "review":
-
-        query += """
-
-            AND LOWER(c.final_status)
-            IN
-            ('manual review', 'manual review required')
-
-        """
-
-
-    query += """
-
-        ORDER BY c.claim_id DESC
-
-    """
-
-
-    claims = query_database(
-        query,
-        params
-    )
-
-
-    return render_template( "user_management.html",
-                           claims=claims,search=search,category=category, status=status)
-
-
-# # ============================================================
-# # RUN APPLICATION
-# # ============================================================
-
-# if __name__ == "__main__":
-
-#     app.run(
-#         host="127.0.0.1",
-#         port=5000,
-#         debug=True
-#     )
-
-
-
-
 # ---------------------------------------------------------------------------
 # Model and rule engine loading (SRS xviii, xix, xxv)
 # ---------------------------------------------------------------------------
@@ -1442,12 +128,12 @@ def get_pipeline():
     return _pipeline_cache["pipeline"]
 
 
-# def get_policies() -> dict:
-#     if "policies" not in _pipeline_cache:
-#         from rule_engine import load_policies
+def get_policies() -> dict:
+    if "policies" not in _pipeline_cache:
+        from rule_engine import load_policies
 
-#         _pipeline_cache["policies"] = load_policies(POLICY_DIR)
-#     return _pipeline_cache["policies"]
+        _pipeline_cache["policies"] = load_policies(POLICY_DIR)
+    return _pipeline_cache["policies"]
 
 
 def evaluate_submission(form: dict) -> dict:
@@ -1457,53 +143,53 @@ def evaluate_submission(form: dict) -> dict:
     SRS xix requires a confidence score for all three classes. SRS xxv requires
     independent rule validation. Neither depends on the other.
     """
-    # from rule_engine import evaluate_claim
+    from rule_engine import evaluate_claim
 
-    # claim = {
-    #     "claim_id": form.get("claim_id") or "PENDING",
-    #     "product_category": form.get("product_category", ""),
-    #     "brand": form.get("brand", ""),
-    #     "model": form.get("model", ""),
-    #     "retailer": form.get("retailer", ""),
-    #     "purchase_date": form.get("purchase_date", ""),
-    #     "purchase_price": float(form.get("purchase_price") or 0),
-    #     "purchase_information_consistent": form.get("purchase_consistent") == "on",
-    #     "serial_number": form.get("serial_number", ""),
-    #     "receipt_serial_number": form.get("receipt_serial_number", ""),
-    #     "warranty_card_serial_number": form.get("warranty_card_serial_number", ""),
-    #     "product_image_serial_number": form.get("product_image_serial_number", ""),
-    #     "repair_record_serial_number": form.get("repair_record_serial_number", ""),
-    #     "receipt_model": form.get("model", ""),
-    #     "warranty_card_model": form.get("model", ""),
-    #     "product_image_model": form.get("model", ""),
-    #     "repair_record_model": form.get("model", ""),
-    #     "warranty_provider": form.get("warranty_provider", ""),
-    #     "warranty_start_date": form.get("purchase_date", ""),
-    #     "warranty_expiry_date": form.get("warranty_expiry_date", ""),
-    #     "warranty_duration_months": int(form.get("warranty_duration_months") or 12),
-    #     "extended_warranty": form.get("extended_warranty") == "on",
-    #     "fault_date": form.get("fault_date", ""),
-    #     "claim_date": form.get("claim_date", ""),
-    #     "last_repair_date": form.get("last_repair_date") or None,
-    #     "fault_category": form.get("fault_category", ""),
-    #     "fault_description": form.get("fault_description", ""),
-    #     "damage_type": form.get("damage_type", ""),
-    #     "physical_damage": form.get("physical_damage") == "on",
-    #     "liquid_damage": form.get("liquid_damage") == "on",
-    #     "unauthorized_repair": form.get("unauthorized_repair") == "on",
-    #     "authorized_service_center": form.get("authorized_service_center") == "on",
-    #     "previous_repair_count": int(form.get("previous_repair_count") or 0),
-    #     "previous_replacement": form.get("previous_replacement") == "on",
-    #     "previous_replacement_count": int(form.get("previous_replacement_count") or 0),
-    #     "replacement_requested": form.get("replacement_requested") == "on",
-    #     "receipt_available": form.get("receipt_available") == "on",
-    #     "receipt_valid": form.get("receipt_valid") == "on",
-    #     "warranty_card_available": form.get("warranty_card_available") == "on",
-    #     "product_image_available": form.get("product_image_available") == "on",
-    #     "serial_evidence_available": form.get("serial_evidence_available") == "on",
-    #     "fault_evidence_available": form.get("fault_evidence_available") == "on",
-    #     "repair_report_available": form.get("repair_report_available") == "on",
-    # }
+    claim = {
+        "claim_id": form.get("claim_id") or "PENDING",
+        "product_category": form.get("product_category", ""),
+        "brand": form.get("brand", ""),
+        "model": form.get("model", ""),
+        "retailer": form.get("retailer", ""),
+        "purchase_date": form.get("purchase_date", ""),
+        "purchase_price": float(form.get("purchase_price") or 0),
+        "purchase_information_consistent": form.get("purchase_consistent") == "on",
+        "serial_number": form.get("serial_number", ""),
+        "receipt_serial_number": form.get("receipt_serial_number", ""),
+        "warranty_card_serial_number": form.get("warranty_card_serial_number", ""),
+        "product_image_serial_number": form.get("product_image_serial_number", ""),
+        "repair_record_serial_number": form.get("repair_record_serial_number", ""),
+        "receipt_model": form.get("model", ""),
+        "warranty_card_model": form.get("model", ""),
+        "product_image_model": form.get("model", ""),
+        "repair_record_model": form.get("model", ""),
+        "warranty_provider": form.get("warranty_provider", ""),
+        "warranty_start_date": form.get("purchase_date", ""),
+        "warranty_expiry_date": form.get("warranty_expiry_date", ""),
+        "warranty_duration_months": int(form.get("warranty_duration_months") or 12),
+        "extended_warranty": form.get("extended_warranty") == "on",
+        "fault_date": form.get("fault_date", ""),
+        "claim_date": form.get("claim_date", ""),
+        "last_repair_date": form.get("last_repair_date") or None,
+        "fault_category": form.get("fault_category", ""),
+        "fault_description": form.get("fault_description", ""),
+        "damage_type": form.get("damage_type", ""),
+        "physical_damage": form.get("physical_damage") == "on",
+        "liquid_damage": form.get("liquid_damage") == "on",
+        "unauthorized_repair": form.get("unauthorized_repair") == "on",
+        "authorized_service_center": form.get("authorized_service_center") == "on",
+        "previous_repair_count": int(form.get("previous_repair_count") or 0),
+        "previous_replacement": form.get("previous_replacement") == "on",
+        "previous_replacement_count": int(form.get("previous_replacement_count") or 0),
+        "replacement_requested": form.get("replacement_requested") == "on",
+        "receipt_available": form.get("receipt_available") == "on",
+        "receipt_valid": form.get("receipt_valid") == "on",
+        "warranty_card_available": form.get("warranty_card_available") == "on",
+        "product_image_available": form.get("product_image_available") == "on",
+        "serial_evidence_available": form.get("serial_evidence_available") == "on",
+        "fault_evidence_available": form.get("fault_evidence_available") == "on",
+        "repair_report_available": form.get("repair_report_available") == "on",
+    }
 
     # SRS xvi: derived fields must exist BEFORE classification. Without them the
     # numeric imputer receives empty strings, and `repair_history` -- the model's
@@ -1515,47 +201,47 @@ def evaluate_submission(form: dict) -> dict:
     pipeline = get_pipeline()
     features = _pipeline_cache["features"]
 
-    # from preprocessing import prepare_features
+    from preprocessing import prepare_features
 
-#     frame = prepare_features(
-#         _as_frame(claim, features), list(features)
-#     )
-#     probabilities = pipeline.predict_proba(frame)[0]
-#     classes = list(pipeline.named_steps["model"].classes_)
+    frame = prepare_features(
+        _as_frame(claim, features), list(features)
+    )
+    probabilities = pipeline.predict_proba(frame)[0]
+    classes = list(pipeline.named_steps["model"].classes_)
 
-#     prediction = {
-#         "python_predicted_class": classes[int(probabilities.argmax())],
-#         "python_confidence": {
-#             name: round(float(p), 4) for name, p in zip(classes, probabilities)
-#         },
-#     }
+    prediction = {
+        "python_predicted_class": classes[int(probabilities.argmax())],
+        "python_confidence": {
+            name: round(float(p), 4) for name, p in zip(classes, probabilities)
+        },
+    }
 
-#     rule_result = evaluate_claim(claim, get_policies())
-#     prediction["rule_outcome"] = rule_result.outcome
-#     prediction["rule_result"] = rule_result.as_dict()
-#     prediction["derived_facts"] = {
-#         key: claim[key]
-#         for key in (
-#             "product_age_days",
-#             "reporting_days",
-#             "warranty_remaining_days",
-#             "warranty_status",
-#             "days_since_last_repair",
-#             "missing_documents_count",
-#             "missing_documents",
-#             "repair_history",
-#             "supporting_evidence_available",
-#         )
-#     }
+    rule_result = evaluate_claim(claim, get_policies())
+    prediction["rule_outcome"] = rule_result.outcome
+    prediction["rule_result"] = rule_result.as_dict()
+    prediction["derived_facts"] = {
+        key: claim[key]
+        for key in (
+            "product_age_days",
+            "reporting_days",
+            "warranty_remaining_days",
+            "warranty_status",
+            "days_since_last_repair",
+            "missing_documents_count",
+            "missing_documents",
+            "repair_history",
+            "supporting_evidence_available",
+        )
+    }
 
-#     return prediction
+    return prediction
 
 
-# def _as_frame(claim: dict, features: list[str]):
-#     import pandas as pd
+def _as_frame(claim: dict, features: list[str]):
+    import pandas as pd
 
-#     row = {name: claim.get(name, "") for name in features}
-#     return pd.DataFrame([row])
+    row = {name: claim.get(name, "") for name in features}
+    return pd.DataFrame([row])
 
 
 # ---------------------------------------------------------------------------
